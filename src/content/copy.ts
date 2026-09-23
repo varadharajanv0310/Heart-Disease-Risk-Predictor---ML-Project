@@ -131,7 +131,7 @@ export const assess = {
   whereToFind: 'Where do I find this?',
   saved: 'Saved on this device',
   clear: 'Clear my answers',
-  clearConfirm: 'Clear all answers? This can’t be undone.',
+  clearConfirm: 'Tap again to clear everything — this can’t be undone',
   keyboardHint: 'Enter to continue · Esc to go back',
   requiredChoice: 'Choose an answer to continue.',
   requiredNumber: 'Enter a number to continue.',

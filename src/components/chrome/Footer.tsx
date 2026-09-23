@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { brand, footer } from '@/content/copy'
 import { prefersReducedMotion } from '@/hooks/use-media'
 import { gsap, useGSAP } from '@/lib/gsap'
+import { IS_ARTIFACT } from '@/lib/target'
 import { getLenis } from './SmoothScroll'
 import { QrCode } from '../ui/QrCode'
 
@@ -95,10 +96,12 @@ export function Footer() {
           )}
           <p className="text-[11.5px] font-medium leading-[1.45]">{footer.paragraph}</p>
         </div>
-        <div className="flex items-end gap-3">
-          <p className="micro max-w-[7rem] text-right text-[10px] leading-tight">{footer.qrLabel}</p>
-          <QrCode value={href} size={84} label="QR code linking to the Focal heart check" />
-        </div>
+        {!IS_ARTIFACT && (
+          <div className="flex items-end gap-3">
+            <p className="micro max-w-[7rem] text-right text-[10px] leading-tight">{footer.qrLabel}</p>
+            <QrCode value={href} size={84} label="QR code linking to the Focal heart check" />
+          </div>
+        )}
       </div>
       <nav aria-label="Footer" className="relative mt-8 grid grid-cols-2 items-center gap-3 text-[10px] uppercase tracking-[0.08em] md:flex md:justify-between">
         <span>{footer.rights}</span>

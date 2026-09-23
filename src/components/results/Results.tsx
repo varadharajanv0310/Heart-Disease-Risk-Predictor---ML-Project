@@ -18,6 +18,7 @@ import type { ClinicalInput, Computed } from '@/lib/risk/types'
 import { round } from '@/lib/risk/units'
 import { prefersReducedMotion } from '@/hooks/use-media'
 import { setScene } from '@/lib/scene-store'
+import { IS_ARTIFACT } from '@/lib/target'
 import { Arrow, ButtonLink } from '../ui/Button'
 import { Frame } from '../ui/Frame'
 import { QrCode } from '../ui/QrCode'
@@ -89,7 +90,6 @@ export function Results() {
 
 // ── Calculating ─────────────────────────────────────────────────────────
 
-
 function Calculating() {
   const [i, setI] = useState(0)
   useEffect(() => {
@@ -153,7 +153,18 @@ function PreventResults({ a, answers, prefs }: { a: PreventA; answers: Answers; 
           tl={[copy.label, copy.outcome]}
           tr={['Model', copy.model]}
           bl={cat ? [copy.categoryLabel, copy.categories[cat].name] : undefined}
-          br={a.heartAge.status === 'ok' ? [copy.heartAge.heartAge, a.heartAge.bound === 'above' ? copy.heartAge.above : a.heartAge.bound === 'below' ? copy.heartAge.below : String(Math.round(a.heartAge.value))] : undefined}
+          br={
+            a.heartAge.status === 'ok'
+              ? [
+                  copy.heartAge.heartAge,
+                  a.heartAge.bound === 'above'
+                    ? copy.heartAge.above
+                    : a.heartAge.bound === 'below'
+                      ? copy.heartAge.below
+                      : String(Math.round(a.heartAge.value)),
+                ]
+              : undefined
+          }
         >
           <div className="relative isolate px-4 py-24 text-center md:px-10">
             {/* Ref 1's pale centre: keeps the red number legible over the ring. */}
@@ -388,7 +399,11 @@ function WhatIfPanel({ input, value, onChange, baseRisk }: { input: ClinicalInpu
                   onChange={(v) => onChange({ ...value, ldlDrop: v })}
                 />
               )}
-              <button type="button" className="justify-self-start text-[14px] font-medium text-blood underline underline-offset-4" onClick={() => onChange(NO_CHANGE)}>
+              <button
+                type="button"
+                className="justify-self-start text-[14px] font-medium text-blood underline underline-offset-4"
+                onClick={() => onChange(NO_CHANGE)}
+              >
                 {W.reset}
               </button>
             </div>
@@ -409,7 +424,8 @@ function WhatIfPanel({ input, value, onChange, baseRisk }: { input: ClinicalInpu
             <p className="text-[16px] leading-snug">{copy.frequency(newRisk)}</p>
             {ha.status === 'ok' && (
               <p className="mt-2 text-[14px] text-blood/80">
-                {copy.heartAge.heartAge}: {ha.bound === 'above' ? copy.heartAge.above : ha.bound === 'below' ? copy.heartAge.below : Math.round(ha.value)}
+                {copy.heartAge.heartAge}:{' '}
+                {ha.bound === 'above' ? copy.heartAge.above : ha.bound === 'below' ? copy.heartAge.below : Math.round(ha.value)}
               </p>
             )}
           </div>
@@ -420,7 +436,23 @@ function WhatIfPanel({ input, value, onChange, baseRisk }: { input: ClinicalInpu
   )
 }
 
-function Slider({ label, short, unit, max, value, from, onChange }: { label: string; short: string; unit: string; max: number; value: number; from?: number; onChange: (v: number) => void }) {
+function Slider({
+  label,
+  short,
+  unit,
+  max,
+  value,
+  from,
+  onChange,
+}: {
+  label: string
+  short: string
+  unit: string
+  max: number
+  value: number
+  from?: number
+  onChange: (v: number) => void
+}) {
   return (
     <label className="block">
       <span className="flex items-baseline justify-between gap-4">
@@ -530,13 +562,15 @@ function Actions({ answers, prefs }: { answers: Answers; prefs: Prefs }) {
             {copy.actions.method}
           </ButtonLink>
         </div>
-        <div className="flex items-end gap-4">
-          <div className="max-w-[15rem] text-right">
-            <p className="text-[13px] font-semibold">{copy.qr.label}</p>
-            <p className="mt-1 text-[12px] leading-snug text-blood/75">{copy.qr.note}</p>
+        {!IS_ARTIFACT && (
+          <div className="flex items-end gap-4">
+            <div className="max-w-[15rem] text-right">
+              <p className="text-[13px] font-semibold">{copy.qr.label}</p>
+              <p className="mt-1 text-[12px] leading-snug text-blood/75">{copy.qr.note}</p>
+            </div>
+            <QrCode value={href} size={132} label="QR code linking to your printable report" />
           </div>
-          <QrCode value={href} size={132} label="QR code linking to your printable report" />
-        </div>
+        )}
       </div>
       <p className="mt-6 text-center">
         <Link
@@ -604,7 +638,11 @@ function EstimateResults({ a, answers, prefs }: { a: Extract<Assessment, { kind:
         <div className="glass-card p-7 md:p-10">
           <h2 className="micro font-medium">{copy.heartAge.title}</h2>
           <div className="mt-6">
-            {a.heartAge ? <HeartAgePair age={a.input.age} heart={a.heartAge} /> : <p className="text-[15px] text-blood/80">{copy.heartAge.unavailable}</p>}
+            {a.heartAge ? (
+              <HeartAgePair age={a.input.age} heart={a.heartAge} />
+            ) : (
+              <p className="text-[15px] text-blood/80">{copy.heartAge.unavailable}</p>
+            )}
           </div>
         </div>
       </section>

@@ -34,7 +34,9 @@ export function SmoothScroll() {
   }, [reduced])
 
   useEffect(() => {
-    if (window.location.hash) return
+    // Respect an in-page anchor (e.g. /method/#privacy); otherwise start at the top.
+    const anchor = window.location.hash.slice(1)
+    if (anchor && document.getElementById(anchor)) return
     lenis?.scrollTo(0, { immediate: true })
     window.scrollTo(0, 0)
     const id = requestAnimationFrame(() => ScrollTrigger.refresh())

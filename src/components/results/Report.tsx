@@ -13,6 +13,7 @@ import { type Answers, assess } from '@/lib/risk/assess'
 import type { Computed } from '@/lib/risk/types'
 import { length, mass, round } from '@/lib/risk/units'
 import { setScene } from '@/lib/scene-store'
+import { IS_ARTIFACT } from '@/lib/target'
 import { Button } from '../ui/Button'
 import { QrCode } from '../ui/QrCode'
 import { pct } from './parts'
@@ -105,7 +106,7 @@ export function Report() {
         <Link href="/results/" className="text-[14px] font-medium text-crimson underline underline-offset-4">
           ← {copy.back}
         </Link>
-        <Button onClick={() => window.print()}>{copy.print}</Button>
+        {!IS_ARTIFACT && <Button onClick={() => window.print()}>{copy.print}</Button>}
       </div>
 
       <article className="mx-auto max-w-[210mm] bg-white p-8 text-blood shadow-[0_30px_80px_-40px_rgba(26,0,4,0.35)] print:max-w-none print:p-0 print:shadow-none md:p-12">
@@ -118,7 +119,7 @@ export function Report() {
             <h1 className="mt-3 text-[28px] font-medium tracking-[-0.03em]">{copy.title}</h1>
             <p className="mt-1 text-[13px] text-blood/75">{copy.generated(date)}</p>
           </div>
-          <QrCode value={href} size={96} label="QR code linking to this report" />
+          {!IS_ARTIFACT && <QrCode value={href} size={96} label="QR code linking to this report" />}
         </header>
 
         {a.kind === 'prevent' ? (

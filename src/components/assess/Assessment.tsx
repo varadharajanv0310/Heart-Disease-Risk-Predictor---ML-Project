@@ -207,18 +207,7 @@ export function Assessment() {
               <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-signal" />
               {copy.saved}
               <span aria-hidden>·</span>
-              <button
-                type="button"
-                className="underline underline-offset-4 hover:no-underline"
-                onClick={() => {
-                  if (window.confirm(copy.clearConfirm)) {
-                    store.clear()
-                    setBlock(null)
-                  }
-                }}
-              >
-                {copy.clear}
-              </button>
+              <ClearAnswers onCleared={() => setBlock(null)} />
             </p>
             <p id="kbd-hint" className="hidden md:block">
               {copy.keyboardHint}
@@ -227,6 +216,34 @@ export function Assessment() {
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Two-step, in-page confirmation (no window.confirm: sandboxed pages refuse it,
+ * and a native dialog breaks the flow anyway).
+ */
+function ClearAnswers({ onCleared }: { onCleared: () => void }) {
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    if (!armed) return
+    const t = setTimeout(() => setArmed(false), 4000)
+    return () => clearTimeout(t)
+  }, [armed])
+  return (
+    <button
+      type="button"
+      aria-live="polite"
+      className={`underline underline-offset-4 hover:no-underline ${armed ? 'font-semibold text-blood' : ''}`}
+      onClick={() => {
+        if (!armed) return setArmed(true)
+        store.clear()
+        setArmed(false)
+        onCleared()
+      }}
+    >
+      {armed ? copy.clearConfirm : copy.clear}
+    </button>
   )
 }
 

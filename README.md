@@ -27,6 +27,14 @@ npm run build      # static export → ./out  (serve with any static host)
 
 Node 22+. There are no environment variables and no server.
 
+### Claude artifact build
+
+```bash
+npm run build:artifact   # → artifact/dist/focal.html (one self-contained page)
+```
+
+The same `src/` code is bundled as a single-page app for a claude.ai artifact. Small shims in `artifact/shims` stand in for `next/link`, `next/navigation` and `next/dynamic`, and routes become hash tokens: `#check`, `#results`, `#method`, `#method.privacy`. The artifact sandbox can't print, and its URL can't be shared by QR, so that build hides the Print button and QR codes. Everything else is identical.
+
 ## Structure
 
 ```
