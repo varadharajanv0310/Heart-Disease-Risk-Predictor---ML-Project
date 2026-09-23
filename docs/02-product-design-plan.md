@@ -58,7 +58,7 @@
 
 **Radii:** `hairline` 6 (the ref 1 frame) · `card` 24 · `glass` 44 (ref 3) · `pill` 999.
 
-**Glass:** fill `rgba(255,255,255,.34)` · `backdrop-filter: blur(28px) saturate(140%)` · 1 px border `rgba(255,255,255,.65)` · inset highlight `0 1px 0 rgba(255,255,255,.8)` · drop shadow `0 40px 80px -40px rgba(158,0,18,.35)`.
+**Glass:** decorative fill `rgba(255,255,255,.34)`; text cards fill `.60` with `blur(30px) saturate(160%)`, so the red cells read through, as in ref 3 · · 1 px border `rgba(255,255,255,.65)` · inset highlight `0 1px 0 rgba(255,255,255,.8)` · drop shadow `0 40px 80px -40px rgba(158,0,18,.35)`.
 
 **Blur scale:** 0 · 4 · 12 · 24 · 48 px.
 
