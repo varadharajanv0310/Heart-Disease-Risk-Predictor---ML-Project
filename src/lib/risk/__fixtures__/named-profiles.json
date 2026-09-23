@@ -1,0 +1,221 @@
+[
+ {
+  "name": "published-preventr-readme",
+  "input": {
+   "sex": "female",
+   "age": 50,
+   "totalCholesterol": 200,
+   "hdl": 45,
+   "sbp": 160,
+   "diabetes": true,
+   "smoker": false,
+   "bmi": 35,
+   "egfr": 90,
+   "bpTreated": true,
+   "statin": false
+  },
+  "tenYear": {
+   "cvd": 14.683939095644824,
+   "ascvd": 9.195089753632866,
+   "hf": 8.056096777914263
+  },
+  "thirtyYear": {
+   "cvd": 52.98503870635785,
+   "ascvd": 35.42551988690411,
+   "hf": 38.96022671106631
+  }
+ },
+ {
+  "name": "pyprevent-readme",
+  "input": {
+   "sex": "male",
+   "age": 40,
+   "totalCholesterol": 200,
+   "hdl": 50,
+   "sbp": 120,
+   "diabetes": false,
+   "smoker": false,
+   "bmi": 25,
+   "egfr": 70,
+   "bpTreated": false,
+   "statin": false
+  },
+  "tenYear": {
+   "cvd": 1.2753982216095923,
+   "ascvd": 0.9133731367204545,
+   "hf": 0.39223920421014036
+  },
+  "thirtyYear": {
+   "cvd": 10.458196380726008,
+   "ascvd": 7.008061525002453,
+   "hf": 3.889406320828301
+  }
+ },
+ {
+  "name": "pyprevent-docstring",
+  "input": {
+   "sex": "male",
+   "age": 45,
+   "totalCholesterol": 210,
+   "hdl": 55,
+   "sbp": 130,
+   "diabetes": false,
+   "smoker": true,
+   "bmi": 28,
+   "egfr": 65,
+   "bpTreated": false,
+   "statin": false
+  },
+  "tenYear": {
+   "cvd": 3.815065642719996,
+   "ascvd": 2.556755297842893,
+   "hf": 1.49454208698616
+  },
+  "thirtyYear": {
+   "cvd": 22.826481800786134,
+   "ascvd": 14.818700095701804,
+   "hf": 11.877310809810442
+  }
+ },
+ {
+  "name": "ckd-statin-female",
+  "input": {
+   "sex": "female",
+   "age": 65,
+   "totalCholesterol": 180,
+   "hdl": 60,
+   "sbp": 145,
+   "diabetes": false,
+   "smoker": false,
+   "bmi": 27,
+   "egfr": 55,
+   "bpTreated": true,
+   "statin": true
+  },
+  "tenYear": {
+   "cvd": 10.914129867791548,
+   "ascvd": 6.0546976589872274,
+   "hf": 6.664456839993194
+  }
+ },
+ {
+  "name": "high-risk-male",
+  "input": {
+   "sex": "male",
+   "age": 72,
+   "totalCholesterol": 240,
+   "hdl": 38,
+   "sbp": 170,
+   "diabetes": true,
+   "smoker": true,
+   "bmi": 33,
+   "egfr": 40,
+   "bpTreated": true,
+   "statin": false
+  },
+  "tenYear": {
+   "cvd": 47.508134274656946,
+   "ascvd": 33.59834624306594,
+   "hf": 37.41186176795581
+  }
+ },
+ {
+  "name": "low-sbp-young-female",
+  "input": {
+   "sex": "female",
+   "age": 35,
+   "totalCholesterol": 160,
+   "hdl": 70,
+   "sbp": 105,
+   "diabetes": false,
+   "smoker": false,
+   "bmi": 21,
+   "egfr": 110,
+   "bpTreated": false,
+   "statin": false
+  },
+  "tenYear": {
+   "cvd": 0.23556636241761925,
+   "ascvd": 0.15050075870743634,
+   "hf": 0.13429542487370813
+  },
+  "thirtyYear": {
+   "cvd": 1.8644500550318983,
+   "ascvd": 1.0950324253891213,
+   "hf": 1.216296899409759
+  }
+ },
+ {
+  "name": "statin-diabetic-male",
+  "input": {
+   "sex": "male",
+   "age": 59,
+   "totalCholesterol": 290,
+   "hdl": 30,
+   "sbp": 190,
+   "diabetes": true,
+   "smoker": false,
+   "bmi": 38,
+   "egfr": 125,
+   "bpTreated": false,
+   "statin": true
+  },
+  "tenYear": {
+   "cvd": 37.159328556044905,
+   "ascvd": 30.943200086044225,
+   "hf": 20.482811589286783
+  },
+  "thirtyYear": {
+   "cvd": 69.55781358745178,
+   "ascvd": 60.67395862093024,
+   "hf": 47.95127157017631
+  }
+ },
+ {
+  "name": "boundary-min",
+  "input": {
+   "sex": "female",
+   "age": 30,
+   "totalCholesterol": 130,
+   "hdl": 20,
+   "sbp": 90,
+   "diabetes": false,
+   "smoker": false,
+   "bmi": 18.5,
+   "egfr": 15,
+   "bpTreated": false,
+   "statin": false
+  },
+  "tenYear": {
+   "cvd": 11.346168731320688,
+   "ascvd": 5.092689388961329,
+   "hf": 5.074891373476663
+  },
+  "thirtyYear": {
+   "cvd": 18.92664654568432,
+   "ascvd": 7.825003648089856,
+   "hf": 8.124879513139241
+  }
+ },
+ {
+  "name": "boundary-max",
+  "input": {
+   "sex": "male",
+   "age": 79,
+   "totalCholesterol": 320,
+   "hdl": 100,
+   "sbp": 200,
+   "diabetes": true,
+   "smoker": true,
+   "bmi": 39.9,
+   "egfr": 140,
+   "bpTreated": true,
+   "statin": true
+  },
+  "tenYear": {
+   "cvd": 37.78588083179565,
+   "ascvd": 28.849784367427926,
+   "hf": 38.17241815371409
+  }
+ }
+]
