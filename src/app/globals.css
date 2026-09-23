@@ -378,3 +378,27 @@ html[data-dir='back']::view-transition-new(q-card) { animation-name: card-in-bac
 }
 .range:active::-webkit-slider-thumb { transform: scale(1.15); }
 .range:focus-visible { box-shadow: none; outline-offset: 6px; }
+
+/* Motion-blurred pixel shapes (ref 2) drift slowly; frozen for reduced motion. */
+.pixel-drift {
+  animation: pixel-drift 17s var(--e-in-out) infinite alternate;
+}
+@keyframes pixel-drift {
+  from { translate: 0 0; }
+  to { translate: -5% 7%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pixel-drift { animation: none; }
+}
+
+/* Ref 4 smoke: slow, soft drift. */
+.smoke {
+  animation: smoke 22s var(--e-in-out) infinite alternate;
+}
+@keyframes smoke {
+  from { transform: translate(0, 0) scale(1) rotate(0deg); }
+  to { transform: translate(6%, -5%) scale(1.12) rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .smoke { animation: none; }
+}

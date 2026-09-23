@@ -20,12 +20,14 @@ import * as THREE from 'three'
 import { color } from '@/design/tokens'
 import { type SceneMode, onSceneChange, sceneState } from '@/lib/scene-store'
 import { seeded } from '@/lib/random'
-import { createCellGeometry } from './cell-geometry'
+import { createCellGeometry, createPallorTexture } from './cell-geometry'
 
 interface Target {
   pos: [number, number, number]
   rot: [number, number, number]
   scale: number
+  /** If set, scale = fit × min(viewport height, viewport width × 0.7) — the ref 1 ring. */
+  fit?: number
   /** Field (background cells) presence 0…1. */
   field: number
   /** Max bokeh for this mode; multiplied by sceneState.blur. */
@@ -36,8 +38,9 @@ const DESKTOP: Record<SceneMode, Target> = {
   hero: { pos: [2.75, -0.85, -0.5], rot: [1.22, 0.25, 0.62], scale: 2.3, field: 0.55, bokeh: 13 },
   narrative: { pos: [-3.4, -1.2, -3], rot: [0.5, 0.6, -0.4], scale: 2.6, field: 0.8, bokeh: 16 },
   assess: { pos: [3.8, 2.4, -4], rot: [0.9, 0.3, 0.9], scale: 2.4, field: 1, bokeh: 18 },
-  calculating: { pos: [0, 0, 0], rot: [1.15, 0, 0.35], scale: 2.1, field: 0.35, bokeh: 18 },
-  results: { pos: [3.9, 0.6, -2.5], rot: [1.1, 0.25, 0.7], scale: 2.3, field: 0.28, bokeh: 16 },
+  // Ref 1: a huge tilted ring, cropped by the frame, the number in its pale centre.
+  calculating: { pos: [0.4, -0.15, -1.5], rot: [0.78, 0, -0.42], scale: 4.4, fit: 0.86, field: 0.1, bokeh: 18 },
+  results: { pos: [0.4, -0.15, -1.5], rot: [0.78, 0, -0.42], scale: 5, fit: 1, field: 0, bokeh: 14 },
   quiet: { pos: [3.4, -2.2, -4], rot: [0.7, 0.4, 0.2], scale: 2.4, field: 0.6, bokeh: 16 },
 }
 
@@ -46,8 +49,8 @@ const MOBILE: Record<SceneMode, Target> = {
   hero: { pos: [1.35, 2.6, -2], rot: [1.12, 0.2, 0.55], scale: 1.55, field: 0, bokeh: 0 },
   narrative: { pos: [-1.4, -2.8, -5], rot: [0.5, 0.6, -0.4], scale: 1.8, field: 0.3, bokeh: 0 },
   assess: { pos: [1.6, 3.4, -5], rot: [0.9, 0.3, 0.9], scale: 1.8, field: 0.45, bokeh: 0 },
-  calculating: { pos: [0, 0.4, 0], rot: [1.15, 0, 0.35], scale: 1.5, field: 0.2, bokeh: 0 },
-  results: { pos: [1.7, 3.1, -3.5], rot: [1.0, 0.25, 0.7], scale: 1.6, field: 0.12, bokeh: 0 },
+  calculating: { pos: [0, 0.35, -1.5], rot: [0.85, 0, -0.45], scale: 1.6, fit: 0.9, field: 0, bokeh: 0 },
+  results: { pos: [0, 0.35, -1.5], rot: [0.85, 0, -0.45], scale: 1.8, fit: 1.05, field: 0, bokeh: 0 },
   quiet: { pos: [1.6, -3, -5], rot: [0.7, 0.4, 0.2], scale: 1.8, field: 0.3, bokeh: 0 },
 }
 
@@ -79,6 +82,9 @@ function useCellMaterial() {
         iridescenceIOR: 1.35,
         iridescenceThicknessRange: [120, 420],
         envMapIntensity: 1.25,
+        emissive: new THREE.Color('#ffe4e7'),
+        emissiveMap: createPallorTexture(),
+        emissiveIntensity: 0.5,
       }),
     [],
   )
@@ -120,6 +126,8 @@ function Cells({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
     material.color.copy(CALM).lerp(DEEP, I)
     material.sheenColor.copy(SHEEN_CALM).lerp(SHEEN_DEEP, I)
     material.envMapIntensity = 1.35 - 0.55 * I
+    // Calm (low risk) → a brighter, paler centre; heavy (high risk) → deeper.
+    material.emissiveIntensity = 1.15 - 0.45 * I
 
     const m = hero.current
     if (m) {
@@ -143,8 +151,9 @@ function Cells({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
           : sceneState.mode === 'results' && !reduced
             ? 1 + 0.012 * heartbeat(t * (0.8 + 0.5 * I))
             : 1
-      const base = (m.userData.base as number | undefined) ?? target.scale
-      const s = base + (target.scale - base) * k
+      const want = target.fit ? target.fit * Math.min(state.viewport.height, state.viewport.width * 0.7) : target.scale
+      const base = (m.userData.base as number | undefined) ?? want
+      const s = base + (want - base) * k
       m.userData.base = s
       m.scale.setScalar(s * pulse)
     }

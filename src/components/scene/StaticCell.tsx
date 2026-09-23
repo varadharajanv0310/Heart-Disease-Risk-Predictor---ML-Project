@@ -7,7 +7,7 @@ export function StaticCell({ className = '' }: { className?: string }) {
   return (
     <div className={`absolute inset-0 overflow-hidden bg-paper ${className}`}>
       <svg
-        className="absolute -right-[18vmax] top-[4vh] h-[88vmax] w-[88vmax] md:-right-[8vmax] md:top-[6vh] md:h-[70vmax] md:w-[70vmax]"
+        className="absolute -right-[26vw] -top-[4vh] h-[78vw] w-[78vw] md:-right-[8vmax] md:top-[6vh] md:h-[70vmax] md:w-[70vmax]"
         viewBox="0 0 400 400"
         role="presentation"
       >
@@ -23,6 +23,10 @@ export function StaticCell({ className = '' }: { className?: string }) {
             <stop offset="0.7" stopColor="#c8061c" />
             <stop offset="1" stopColor="#e5162c" stopOpacity="0" />
           </radialGradient>
+          <radialGradient id="sc-pallor" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stopColor="#ffe4e7" stopOpacity="0.9" />
+            <stop offset="1" stopColor="#ffe4e7" stopOpacity="0" />
+          </radialGradient>
           <radialGradient id="sc-spec" cx="50%" cy="50%" r="50%">
             <stop offset="0" stopColor="#fff" stopOpacity="0.95" />
             <stop offset="1" stopColor="#fff" stopOpacity="0" />
@@ -37,11 +41,12 @@ export function StaticCell({ className = '' }: { className?: string }) {
         <g transform="rotate(-28 200 200)" filter="url(#sc-soft)">
           <ellipse cx="200" cy="200" rx="160" ry="118" fill="url(#sc-body)" />
           <ellipse cx="206" cy="210" rx="92" ry="60" fill="url(#sc-dimple)" />
+          <ellipse cx="204" cy="206" rx="70" ry="44" fill="url(#sc-pallor)" />
           <ellipse cx="150" cy="140" rx="70" ry="22" fill="url(#sc-spec)" transform="rotate(-10 150 140)" />
         </g>
       </svg>
       <div
-        className="absolute left-[6vw] top-[62vh] h-[22vmax] w-[22vmax] rounded-full opacity-80"
+        className="absolute left-[6vw] top-[62vh] hidden h-[22vmax] w-[22vmax] rounded-full opacity-80 md:block"
         style={{ background: 'radial-gradient(circle at 35% 30%, #ff7a88, #e3000f 45%, #7a000c 80%)', filter: 'blur(28px)' }}
       />
       <div

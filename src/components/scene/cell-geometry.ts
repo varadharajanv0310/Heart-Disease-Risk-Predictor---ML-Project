@@ -1,4 +1,4 @@
-import { LatheGeometry, Vector2 } from 'three'
+import { DataTexture, LatheGeometry, LinearFilter, RGBAFormat, SRGBColorSpace, Vector2 } from 'three'
 
 /**
  * Red blood cell geometry from the Evans–Fung biconcave profile
@@ -38,4 +38,31 @@ export function createCellGeometry(samples = 64, segments = 96, thickness = 1.25
   const geo = new LatheGeometry(pts, segments)
   geo.computeVertexNormals()
   return geo
+}
+
+/**
+ * Central pallor: the thin middle of a real red cell transmits more light, so
+ * it looks paler (the classic microscope sign). Encoded as an emissive map
+ * along the lathe's V coordinate, where ρ(v) = sin(πv) for this geometry.
+ * Pale where ρ < ~0.45, fading out by ρ ≈ 0.75 — the dimple, not the rim.
+ */
+export function createPallorTexture(size = 256): DataTexture {
+  const data = new Uint8Array(2 * size * 4)
+  for (let j = 0; j < size; j++) {
+    const v = j / (size - 1)
+    const rho = Math.sin(Math.PI * v)
+    const t = Math.min(1, Math.max(0, (0.75 - rho) / (0.75 - 0.3)))
+    const pallor = Math.round(255 * t * t * (3 - 2 * t))
+    for (let i = 0; i < 2; i++) {
+      const k = (j * 2 + i) * 4
+      data[k] = data[k + 1] = data[k + 2] = pallor
+      data[k + 3] = 255
+    }
+  }
+  const tex = new DataTexture(data, 2, size, RGBAFormat)
+  tex.colorSpace = SRGBColorSpace
+  tex.magFilter = LinearFilter
+  tex.minFilter = LinearFilter
+  tex.needsUpdate = true
+  return tex
 }

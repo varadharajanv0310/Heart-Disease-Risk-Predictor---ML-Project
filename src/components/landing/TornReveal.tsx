@@ -14,6 +14,16 @@ import { seeded } from '@/lib/random'
 import { setScene } from '@/lib/scene-store'
 
 const N = 150
+/** Where curled paper flaps fold into the hole (ref 2): [index, depth, skew]. */
+const FLAPS: [number, number, number][] = [
+  [9, 0.085, 0.3],
+  [33, 0.06, -0.4],
+  [56, 0.1, 0.2],
+  [81, 0.07, -0.2],
+  [103, 0.09, 0.5],
+  [126, 0.055, -0.3],
+  [142, 0.075, 0.1],
+]
 
 function useTearShape() {
   return useMemo(() => {
@@ -35,6 +45,8 @@ export function TornReveal({ hero, reveal }: { hero: ReactNode; reveal: ReactNod
   const layer = useRef<HTMLDivElement>(null)
   const rim = useRef<SVGPathElement>(null)
   const rimSvg = useRef<SVGSVGElement>(null)
+  const edge = useRef<SVGPathElement>(null)
+  const flaps = useRef<(SVGPathElement | null)[]>([])
   const heroLayer = useRef<HTMLDivElement>(null)
   const shape = useTearShape()
 
@@ -58,8 +70,24 @@ export function TornReveal({ hero, reveal }: { hero: ReactNode; reveal: ReactNod
         const pts = shape.map(({ a, r }) => [cx + Math.cos(a) * r * R, cy + Math.sin(a) * r * R * 0.86] as const)
         el.style.clipPath = R <= 0.5 ? 'polygon(50% 50%, 50% 50%, 50% 50%)' : `polygon(${pts.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(',')})`
         if (rim.current && rimSvg.current) {
+          const d = (ps: readonly (readonly [number, number])[]) => `M${ps.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L')}Z`
+          const empty = R <= 0.5
           rimSvg.current.setAttribute('viewBox', `0 0 ${W} ${H}`)
-          rim.current.setAttribute('d', R <= 0.5 ? '' : `M${pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L')}Z`)
+          rim.current.setAttribute('d', empty ? '' : d(pts))
+          // Paper thickness: a faint shaded line just inside the torn edge.
+          edge.current?.setAttribute('d', empty ? '' : d(pts.map(([x, y]) => [cx + (x - cx) * 0.988, cy + (y - cy) * 0.988] as const)))
+          // Curled flaps folding into the hole.
+          FLAPS.forEach(([i, depth, skew], k) => {
+            const el = flaps.current[k]
+            if (!el) return
+            if (empty) return el.setAttribute('d', '')
+            const a = pts[(i - 4 + N) % N]!
+            const b = pts[(i + 4) % N]!
+            const m = pts[i]!
+            const tipX = m[0] + (cx - m[0]) * depth + (b[0] - a[0]) * skew * 0.5
+            const tipY = m[1] + (cy - m[1]) * depth + (b[1] - a[1]) * skew * 0.5
+            el.setAttribute('d', `M${a[0].toFixed(1)} ${a[1].toFixed(1)}Q${m[0].toFixed(1)} ${m[1].toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}L${tipX.toFixed(1)} ${tipY.toFixed(1)}Z`)
+          })
           rimSvg.current.style.opacity = e > 0.97 ? String(Math.max(0, (1 - e) / 0.03)) : '1'
         }
         if (heroLayer.current && !reduced) {
@@ -110,8 +138,24 @@ export function TornReveal({ hero, reveal }: { hero: ReactNode; reveal: ReactNod
             <filter id="tear-shadow" x="-10%" y="-10%" width="120%" height="120%">
               <feDropShadow dx="0" dy="6" stdDeviation="7" floodColor="#1A0004" floodOpacity="0.28" />
             </filter>
+            <linearGradient id="flap-fill" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#FFFFFF" />
+              <stop offset="0.6" stopColor="#F1EDEA" />
+              <stop offset="1" stopColor="#D9D2CE" />
+            </linearGradient>
           </defs>
           <path ref={rim} fill="none" stroke="#FFFFFF" strokeWidth="12" strokeLinejoin="round" filter="url(#tear-shadow)" />
+          <path ref={edge} fill="none" stroke="#1A0004" strokeOpacity="0.16" strokeWidth="1.5" strokeLinejoin="round" />
+          {FLAPS.map((_, k) => (
+            <path
+              key={k}
+              ref={(el) => {
+                flaps.current[k] = el
+              }}
+              fill="url(#flap-fill)"
+              filter="url(#tear-shadow)"
+            />
+          ))}
         </svg>
       </div>
     </div>

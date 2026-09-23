@@ -8,6 +8,7 @@ import { setScene } from '@/lib/scene-store'
 import { Arrow, ButtonLink } from '../ui/Button'
 import { Frame } from '../ui/Frame'
 import { Magnetic } from '../ui/Magnetic'
+import { PixelDrift } from '../ui/PixelDrift'
 import { Reveal } from '../ui/Reveal'
 
 const { why, measure, how, heartAge, final } = sections
@@ -74,6 +75,7 @@ export function Why() {
 export function Measure() {
   return (
     <section aria-labelledby="measure-h" className="gutter relative py-28 md:py-40">
+      <PixelDrift glyph="percent" blur={8} angle={6} delay={1} className="-right-[5vw] top-[4%] h-[22vmin] w-[22vmin]" />
       <SectionLabel index={measure.index} label={measure.label} />
       <div className="mt-8 grid gap-6 md:grid-cols-12">
         <Reveal as="h2" id="measure-h" className="text-[clamp(2.2rem,5vw,4.8rem)] font-medium display-tight md:col-span-8">
@@ -84,7 +86,7 @@ export function Measure() {
       <ul className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-measure-cards>
         {measure.cards.map((c, i) => (
           <li key={c.k} className="glass-strong flex min-h-48 flex-col justify-between p-6 [border-radius:28px]">
-            <span className="pixel text-[11px] text-ink-red">{String(i + 1).padStart(2, '0')}</span>
+            <span className="pixel text-[11px] text-blood">{String(i + 1).padStart(2, '0')}</span>
             <div>
               <h3 className="text-xl font-semibold tracking-[-0.02em]">{c.k}</h3>
               <p className="mt-2 text-[15px] leading-snug text-blood/80">{c.v}</p>
@@ -150,6 +152,7 @@ export function HeartAge() {
   )
   return (
     <section ref={root} aria-labelledby="ha-h" className="gutter relative py-28 md:py-40">
+      <PixelDrift glyph="heart" blur={11} angle={12} delay={2} className="-left-[8vw] bottom-[6%] hidden h-[24vmin] w-[24vmin] md:block" />
       <SectionLabel index={heartAge.index} label={heartAge.label} />
       <div className="mt-8 grid gap-12 md:grid-cols-12">
         <div className="md:col-span-6">
@@ -160,15 +163,15 @@ export function HeartAge() {
           <p className="mt-4 text-lg font-semibold text-ink-red">{heartAge.kicker}</p>
           <p className="mt-8 text-sm text-muted">{heartAge.note}</p>
         </div>
-        <div className="glass relative flex items-end justify-between gap-6 p-6 md:col-span-6 md:p-10" aria-label={`Example: age ${heartAge.demo.real}, heart age ${heartAge.demo.heart}`} role="img">
+        <div className="glass-card relative flex items-end justify-between gap-6 p-6 md:col-span-6 md:p-10" aria-label={`Example: age ${heartAge.demo.real}, heart age ${heartAge.demo.heart}`} role="img">
           <div>
-            <p className="micro text-muted">{heartAge.demo.realLabel}</p>
+            <p className="micro text-blood">{heartAge.demo.realLabel}</p>
             <p className="pixel text-[clamp(4.5rem,12vw,10rem)] leading-none text-blood">{heartAge.demo.real}</p>
           </div>
           <Arrow className="mb-8 h-8 w-8 text-signal" />
           <div className="text-right">
-            <p className="micro text-ink-red">{heartAge.demo.heartLabel}</p>
-            <p data-heart-age className="pixel text-[clamp(4.5rem,12vw,10rem)] leading-none text-signal">
+            <p className="micro text-blood">{heartAge.demo.heartLabel}</p>
+            <p data-heart-age className="pixel text-[clamp(4.5rem,12vw,10rem)] leading-none text-crimson">
               {heartAge.demo.heart}
             </p>
           </div>

@@ -206,7 +206,7 @@ export function NumberField({
                 aria-checked={u.id === unit}
                 onClick={() => onUnitChange?.(u.id)}
                 className={`rounded-pill px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-300 ${
-                  u.id === unit ? 'bg-blood text-white' : 'text-blood hover:text-crimson'
+                  u.id === unit ? 'bg-blood text-white' : 'text-blood hover:bg-white'
                 }`}
               >
                 {u.label}
@@ -236,12 +236,14 @@ export function NumberField({
 
       <div aria-live="polite" className="min-h-6">
         {error && (
-          <p id={errId} className="mt-3 text-[14px] font-medium text-crimson">
+          <p id={errId} className="mt-3 text-[14px] font-medium text-blood">
+            <span aria-hidden className="mr-2 inline-block h-2 w-2 translate-y-[-1px] bg-signal" />
             {error}
           </p>
         )}
         {outOfModel && spec.model && (
-          <p id={warnId} className="mt-3 text-[14px] text-crimson">
+          <p id={warnId} className="mt-3 text-[14px] text-blood">
+            <span aria-hidden className="mr-2 inline-block h-2 w-2 translate-y-[-1px] bg-signal" />
             {copy.outOfModel(`${fmt(spec.model.min, spec.decimals)} ${spec.label}`, `${fmt(spec.model.max, spec.decimals)} ${spec.label}`)}
           </p>
         )}
@@ -255,7 +257,7 @@ export function NumberField({
 export function Help({ label = copy.whereToFind, children }: { label?: string; children: ReactNode }) {
   return (
     <details className="group mt-5 rounded-2xl border border-blood/10 bg-white/60 px-4 py-3 open:bg-white/80">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-medium text-crimson [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-medium text-blood [&::-webkit-details-marker]:hidden">
         {label}
         <span aria-hidden className="text-lg leading-none transition-transform duration-300 group-open:rotate-45">
           +

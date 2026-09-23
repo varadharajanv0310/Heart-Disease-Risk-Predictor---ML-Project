@@ -141,8 +141,8 @@ export function HeartAgePair({ age, heart }: { age: number; heart: HeartAge }) {
           <path d="M0 8h36M30 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
         <div>
-          <p className="micro text-crimson">{h.heartAge}</p>
-          <p className={`pixel whitespace-nowrap leading-none text-signal ${shown.length > 3 ? 'text-[clamp(1.6rem,3.4vw,2.6rem)]' : 'text-[clamp(3.5rem,9vw,7rem)]'}`}>{shown}</p>
+          <p className="micro text-blood">{h.heartAge}</p>
+          <p className={`pixel whitespace-nowrap leading-none text-crimson ${shown.length > 3 ? 'text-[clamp(1.6rem,3.4vw,2.6rem)]' : 'text-[clamp(3.5rem,9vw,7rem)]'}`}>{shown}</p>
         </div>
       </div>
       <p className="mt-5 text-[17px] font-medium text-blood">{message}</p>

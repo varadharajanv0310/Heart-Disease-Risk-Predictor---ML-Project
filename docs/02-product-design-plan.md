@@ -109,3 +109,12 @@
 | Motion | GSAP 3.15 + ScrollTrigger (@gsap/react), Lenis 1.3, View Transitions API (with a progressive fallback) |
 | Other | `qrcode` (SVG QR), Vitest 5 (engine), Playwright (QA screenshots, keyboard pass) |
 | Fonts | @fontsource-variable/inter-tight and @fontsource/silkscreen, self-hosted through next/font/local |
+
+## Reference mapping (the four art-direction images)
+
+| Ref | What's in it | Where it lives in Focal |
+|---|---|---|
+| **1 · Shift-Zer0** | Huge soft-focus red torus with a pale centre and blood-black shadow; 1 px red hairline frame; corner labels; giant light-weight "0" | The results hero: the red cell becomes a huge tilted ring, cropped by the frame, with the giant risk % in its pale centre. The pallor is real anatomy: an emissive map driven by the Evans–Fung thickness profile. Hairline frames and corner labels on the hero, results, method and 404 |
+| **2 · O'b** | White pill nav with a solid red active pill; torn hole with curled flaps revealing red pixel type; motion-blurred pixel shapes; "Click here" pill + cursor; tiny footer labels; round red button | Pill nav with a gliding red pill. Torn-paper reveal from hero to section 01, with curled, shaded flaps and paper thickness. Motion-blurred pixel hearts, plus and % shapes drifting at the edges. A cursor that morphs into a labelled red pill. Footer micro-labels and a round red back-to-top button |
+| **3 · Glass** | Large rounded frosted panel over glossy chrome-red spheres, which stay visible through it; light black micro-labels | Assessment and results cards: 60% fill, 30 px blur, 1.6 saturation, 44 px radius. The cells read through the glass, and small text on glass is always dark for contrast |
+| **4 · blur 2025** | Year stamp at top centre; big blurred red wordmark in red smoke on white; dense red paragraph bottom-left; QR bottom-right | "focal 2026" stamp at top centre. The landing page ends on a giant wordmark that resolves from blur through red smoke, with the dense disclaimer paragraph and a working QR. Blur-to-focus is the site-wide text reveal |

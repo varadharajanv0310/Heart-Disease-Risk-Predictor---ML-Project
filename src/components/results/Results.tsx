@@ -37,7 +37,7 @@ function useCalculating(key: string, enabled: boolean) {
       /* ignore */
     }
     if (seen) {
-      setScene({ mode: 'results', blur: 0.6 })
+      setScene({ mode: 'results', blur: 0.9 })
       return
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -57,7 +57,7 @@ function useCalculating(key: string, enabled: boolean) {
           /* ignore */
         }
         setPhase('done')
-        setScene({ mode: 'results', blur: 0.6 })
+        setScene({ mode: 'results', blur: 0.9 })
       },
     })
     return () => {
@@ -100,7 +100,7 @@ function Calculating() {
     <div className="flex min-h-[100svh] flex-col items-center justify-center gap-6 text-center" role="status" aria-live="polite">
       <span className="sr-only">{calcCopy.sr}</span>
       <span aria-hidden className="beat inline-block h-3 w-3 rounded-full bg-signal" />
-      <p aria-hidden className="pixel text-[13px] text-crimson">
+      <p aria-hidden className="pixel rounded-pill bg-white/90 px-3 py-1.5 text-[13px] text-crimson">
         {calcCopy.lines[i]}
       </p>
     </div>
@@ -155,7 +155,12 @@ function PreventResults({ a, answers, prefs }: { a: PreventA; answers: Answers; 
           bl={cat ? [copy.categoryLabel, copy.categories[cat].name] : undefined}
           br={a.heartAge.status === 'ok' ? [copy.heartAge.heartAge, a.heartAge.bound === 'above' ? copy.heartAge.above : a.heartAge.bound === 'below' ? copy.heartAge.below : String(Math.round(a.heartAge.value))] : undefined}
         >
-          <div className="px-4 py-24 text-center md:px-10">
+          <div className="relative isolate px-4 py-24 text-center md:px-10">
+            {/* Ref 1's pale centre: keeps the red number legible over the ring. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(78vmin,700px)] w-[min(118vmin,1040px)] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,255,255,0.92),rgba(255,244,245,0.6)_58%,rgba(255,255,255,0))]"
+            />
             <h1 id="result-h" className="sr-only">
               {`${copy.label} ${copy.outcome}`}
             </h1>
@@ -236,7 +241,7 @@ function Horizons({ a }: { a: PreventA }) {
       <span className="text-[clamp(1.4rem,2.6vw,2rem)] font-medium tracking-[-0.03em] tabular">{pct(c.value)}</span>
     ) : (
       <span>
-        <span className="text-[14px] font-medium text-crimson">{t.notComputable}</span>
+        <span className="text-[14px] font-medium text-blood">{t.notComputable}</span>
         <ReasonList c={c} />
       </span>
     )
@@ -383,7 +388,7 @@ function WhatIfPanel({ input, value, onChange, baseRisk }: { input: ClinicalInpu
                   onChange={(v) => onChange({ ...value, ldlDrop: v })}
                 />
               )}
-              <button type="button" className="justify-self-start text-[14px] font-medium text-crimson underline underline-offset-4" onClick={() => onChange(NO_CHANGE)}>
+              <button type="button" className="justify-self-start text-[14px] font-medium text-blood underline underline-offset-4" onClick={() => onChange(NO_CHANGE)}>
                 {W.reset}
               </button>
             </div>
@@ -421,7 +426,7 @@ function Slider({ label, short, unit, max, value, from, onChange }: { label: str
       <span className="flex items-baseline justify-between gap-4">
         <span className="font-medium">{label}</span>
         {from !== undefined && (
-          <span className="pixel shrink-0 text-[12px] text-crimson tabular">
+          <span className="pixel shrink-0 text-[12px] text-blood tabular">
             {from}→{from - value}
           </span>
         )}
@@ -448,7 +453,7 @@ function Notes({ a }: { a: PreventA | Extract<Assessment, { kind: 'estimate' }> 
       <ul className="grid gap-3 md:grid-cols-2">
         {a.notes.map((n) => (
           <li key={n} className="glass-card flex gap-4 p-6 text-[15px] leading-relaxed [border-radius:28px]">
-            <span aria-hidden className="pixel mt-0.5 text-crimson">
+            <span aria-hidden className="pixel mt-0.5 text-blood">
               !
             </span>
             <span>{copy.notes[n]}</span>
@@ -484,7 +489,7 @@ function NextSteps({ input, category }: { input: ClinicalInput; category: Preven
             const [head, ...rest] = t.split(': ')
             return (
               <li key={t} className="grid grid-cols-[2.5rem_1fr] gap-3 border-t border-blood/10 pt-4">
-                <span className="pixel text-[12px] text-crimson">{String(i + 1).padStart(2, '0')}</span>
+                <span className="pixel text-[12px] text-blood">{String(i + 1).padStart(2, '0')}</span>
                 <p className="text-[15px] leading-relaxed">
                   {rest.length ? (
                     <>
@@ -557,7 +562,12 @@ function EstimateResults({ a, answers, prefs }: { a: Extract<Assessment, { kind:
     <div className="pb-10">
       <section className="gutter flex min-h-[100svh] flex-col pb-4 pt-20 md:pb-6 md:pt-24" aria-labelledby="result-h">
         <Frame className="flex flex-1 flex-col justify-center" tl={[E.label, E.outcome]} tr={['Model', E.models[a.model].split(',')[0]!]}>
-          <div className="px-4 py-24 text-center md:px-10">
+          <div className="relative isolate px-4 py-24 text-center md:px-10">
+            {/* Ref 1's pale centre: keeps the red number legible over the ring. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(78vmin,700px)] w-[min(118vmin,1040px)] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,255,255,0.92),rgba(255,244,245,0.6)_58%,rgba(255,255,255,0))]"
+            />
             <div className="mb-6">
               <p className="inline-flex items-center gap-2 rounded-pill border border-blood/30 bg-white/80 px-4 py-2 text-[13px] font-semibold text-blood">
                 <span aria-hidden className="pixel text-crimson">

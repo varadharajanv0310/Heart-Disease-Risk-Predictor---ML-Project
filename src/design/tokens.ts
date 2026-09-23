@@ -57,10 +57,14 @@ export const blur = { none: 0, xs: 4, sm: 12, md: 24, lg: 48 } as const
 export const glass = {
   fill: 'rgba(255,255,255,0.34)',
   fillStrong: 'rgba(255,255,255,0.62)',
-  /** Text-bearing cards: keeps small crimson text ≥4.5:1 even over the deepest red. */
-  fillCard: 'rgba(255,255,255,0.8)',
-  blur: 28,
-  saturate: 1.4,
+  /**
+   * Text-bearing cards (ref 3: the red spheres must read through the glass).
+   * Worst case — directly over the deepest red — this still keeps blood text
+   * ≥7:1 and blood/70 ≥4.9:1, so small text on glass is never red.
+   */
+  fillCard: 'rgba(255,255,255,0.6)',
+  blur: 30,
+  saturate: 1.6,
   border: 'rgba(255,255,255,0.65)',
   highlight: 'inset 0 1px 0 rgba(255,255,255,0.8)',
   shadow: '0 40px 80px -40px rgba(158,0,18,0.35)',

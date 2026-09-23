@@ -171,7 +171,7 @@ export function Assessment() {
         <div ref={card} className="glass-card relative w-full max-w-3xl p-6 md:p-12" style={{ viewTransitionName: 'q-card' }}>
           <div className="flex items-start justify-between gap-4">
             <p className="micro font-medium text-blood">{eyebrow(step)}</p>
-            <p className="pixel text-[13px] text-crimson tabular" aria-hidden>
+            <p className="pixel text-[13px] text-blood tabular" aria-hidden>
               {copy.stepOf(index + 1, steps.length)}
             </p>
           </div>
@@ -179,7 +179,8 @@ export function Assessment() {
           <Question step={step} answers={answers} prefs={prefs} set={set} headingId={headingId} onPick={next} onEdit={(s) => go(steps.indexOf(s), 'back')} />
 
           {nudge && (
-            <p role="alert" className="mt-4 text-[14px] font-medium text-crimson">
+            <p role="alert" className="mt-4 text-[14px] font-medium text-blood">
+              <span aria-hidden className="mr-2 inline-block h-2 w-2 translate-y-[-1px] bg-signal" />
               {step === 'age' || step === 'sbp' || step === 'totalCholesterol' || step === 'hdl' || step === 'egfr' || step === 'body' ? copy.requiredNumber : copy.requiredChoice}
             </p>
           )}
@@ -208,7 +209,7 @@ export function Assessment() {
               <span aria-hidden>·</span>
               <button
                 type="button"
-                className="underline underline-offset-4 hover:text-crimson"
+                className="underline underline-offset-4 hover:no-underline"
                 onClick={() => {
                   if (window.confirm(copy.clearConfirm)) {
                     store.clear()
@@ -570,10 +571,15 @@ function BodyStep({ a, prefs, h }: { a: Answers; prefs: QProps['prefs']; h: stri
         </label>
       </div>
       <div aria-live="polite" className="mt-4 min-h-6 text-[14px]">
-        {err && <p className="font-medium text-crimson">{err}</p>}
+        {err && (
+          <p className="font-medium text-blood">
+            <span aria-hidden className="mr-2 inline-block h-2 w-2 translate-y-[-1px] bg-signal" />
+            {err}
+          </p>
+        )}
         {!err && bmi !== undefined && (
           <p className="text-blood/85">
-            <span className="pixel mr-2 text-crimson">{q.body.bmi(round(bmi, 1).toFixed(1))}</span>
+            <span className="pixel mr-2 text-blood">{q.body.bmi(round(bmi, 1).toFixed(1))}</span>
             {!inRange(bmi, PREVENT_RANGES.bmi) && q.body.bmiOut}
           </p>
         )}
@@ -687,7 +693,7 @@ function Review({ a, prefs, h, onEdit }: { a: Answers; prefs: QProps['prefs']; h
             <dt className="text-[14px] text-blood/80">{k}</dt>
             <dd className="flex items-center gap-3 text-right text-[15px] font-medium text-blood">
               {v}
-              <button type="button" onClick={() => onEdit(s)} className="rounded-pill border border-blood/15 px-3 py-1 text-[12px] font-medium text-crimson hover:border-signal" aria-label={`${r.edit} ${k}`}>
+              <button type="button" onClick={() => onEdit(s)} className="rounded-pill border border-blood/15 px-3 py-1 text-[12px] font-medium text-blood hover:border-signal" aria-label={`${r.edit} ${k}`}>
                 {r.edit}
               </button>
             </dd>

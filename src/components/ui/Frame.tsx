@@ -28,7 +28,7 @@ export function Frame({
   const label = (c: Corner, align: 'left' | 'right', speed: number) =>
     c && (
       <div
-        className={`rounded-md bg-paper/60 px-1.5 py-1 leading-tight backdrop-blur-md ${align === 'right' ? 'text-right' : ''}`}
+        className={`rounded-md bg-paper/92 px-1.5 py-1 leading-tight ${align === 'right' ? 'text-right' : ''}`}
         data-speed={parallax ? speed : undefined}
       >
         <p className="text-[12px] font-medium">{c[0]}</p>

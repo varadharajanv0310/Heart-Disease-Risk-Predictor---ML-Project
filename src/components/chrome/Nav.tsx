@@ -37,7 +37,7 @@ export function Nav() {
   return (
     <header data-nav className="gutter pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between pt-3 md:pt-5">
       <nav aria-label="Main" className="pointer-events-auto">
-        <div className="relative flex items-center rounded-pill border border-white/80 bg-white/70 p-1 shadow-[0_10px_30px_-18px_rgba(158,0,18,0.45)] backdrop-blur-xl">
+        <div className="relative flex items-center rounded-pill border border-white/80 bg-white/90 p-1 shadow-[0_10px_30px_-18px_rgba(158,0,18,0.45)] backdrop-blur-xl">
           {pill && (
             <span
               aria-hidden
@@ -68,23 +68,25 @@ export function Nav() {
 
       <Link
         href="/"
-        className="pointer-events-auto absolute left-1/2 top-4 hidden -translate-x-1/2 flex-col items-center text-ink-red md:top-6 md:flex"
+        className="pointer-events-auto absolute left-1/2 top-3 hidden -translate-x-1/2 flex-col items-center rounded-2xl bg-white/90 px-3 py-1.5 text-ink-red shadow-[0_10px_30px_-18px_rgba(158,0,18,0.45)] md:top-5 md:flex"
         aria-label={`${brand.name} — home`}
       >
         <span className="text-[17px] font-semibold tracking-[-0.03em]">{brand.wordmark}</span>
         <span className="pixel text-[9px] leading-none">{brand.year}</span>
       </Link>
 
-      <div className="pointer-events-auto flex items-center gap-4 rounded-pill border border-white/80 bg-white/70 py-1 pl-2 pr-4 shadow-[0_10px_30px_-18px_rgba(158,0,18,0.45)] backdrop-blur-xl md:gap-5">
-        <Magnetic strength={0.25}>
-          <Link
-            href="/check/"
-            className="hidden rounded-pill px-2 py-2 text-[13px] font-medium text-ink-red underline-offset-4 hover:underline md:inline-block"
-            data-cursor="Start"
-          >
-            {nav.cta}
-          </Link>
-        </Magnetic>
+      <div className="pointer-events-auto flex items-center gap-4 rounded-pill border border-white/80 bg-white/90 py-1 pl-4 pr-4 md:pl-2 shadow-[0_10px_30px_-18px_rgba(158,0,18,0.45)] backdrop-blur-xl md:gap-5">
+        <span className="hidden md:inline-block">
+          <Magnetic strength={0.25}>
+            <Link
+              href="/check/"
+              className="inline-block rounded-pill px-2 py-2 text-[13px] font-medium text-ink-red underline-offset-4 hover:underline"
+              data-cursor="Start"
+            >
+              {nav.cta}
+            </Link>
+          </Magnetic>
+        </span>
         <div className="py-1 text-right leading-tight" aria-label="Private — computed on your device">
           <p className="text-[13px] font-semibold text-blood">{nav.privacyLabel}.</p>
           <p className="micro text-[9px] text-muted">{nav.privacySub}</p>

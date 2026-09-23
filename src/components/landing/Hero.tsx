@@ -4,6 +4,7 @@ import { hero } from '@/content/copy'
 import { Arrow, ButtonLink } from '../ui/Button'
 import { Frame } from '../ui/Frame'
 import { Magnetic } from '../ui/Magnetic'
+import { PixelDrift } from '../ui/PixelDrift'
 
 /** Words run a pure-CSS blur→focus so the largest paint never waits for JS. */
 function FocusWords({ text, start = 0, className = '' }: { text: string; start?: number; className?: string }) {
@@ -23,6 +24,8 @@ export function Hero() {
   const [first, second] = ['Your next ten years,', 'in focus.']
   return (
     <div className="gutter relative flex h-[100svh] min-h-[560px] flex-col pb-4 pt-20 md:pb-6 md:pt-24">
+      <PixelDrift glyph="heart" blur={9} angle={-10} className="-left-[7vw] bottom-[3vh] h-[26vmin] w-[26vmin] md:h-[30vmin] md:w-[30vmin]" />
+      <PixelDrift glyph="plus" blur={6} angle={8} delay={3} opacity={0.85} className="right-[26vw] top-[15vh] hidden h-[10vmin] w-[10vmin] md:block" />
       <Frame className="relative flex flex-1 flex-col justify-end" tl={hero.corners.tl} tr={hero.corners.tr} bl={hero.corners.bl} br={hero.corners.br} parallax>
         <div className="px-3 pb-20 md:px-8 md:pb-24 lg:px-12">
           <p className="micro mb-5 text-ink-red">
