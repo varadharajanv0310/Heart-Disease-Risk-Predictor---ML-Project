@@ -111,12 +111,17 @@ function Cells({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const fieldAmount = useRef(0.5)
   const intensity = useRef(sceneState.intensity)
+  /** Our own animation clock. R3F's resets whenever the frameloop changes; this one never jumps. */
+  const time = useRef(0)
   const { invalidate } = useThree()
 
   useEffect(() => onSceneChange(() => invalidate()), [invalidate])
 
-  useFrame((state, dt) => {
-    const t = state.clock.elapsedTime
+  useFrame((state, rawDt) => {
+    // Clamp so a stalled or backgrounded frame eases on instead of lurching.
+    const dt = Math.min(rawDt, 0.1)
+    time.current += dt
+    const t = time.current
     const target = (mobile ? MOBILE : DESKTOP)[sceneState.mode]
     const k = reduced ? 1 : 1 - Math.exp(-dt * 2.2) // expo-like damping
     const ki = reduced ? 1 : 1 - Math.exp(-dt * 1.4)
@@ -193,16 +198,20 @@ function Cells({ mobile, reduced }: { mobile: boolean; reduced: boolean }) {
 function Focus({ mobile }: { mobile: boolean }) {
   const dof = useRef<DepthOfFieldEffect>(null)
   const bokeh = useRef(4)
-  useFrame((state, dt) => {
+  const focus = useRef<number | null>(null)
+  useFrame((state, rawDt) => {
     const e = dof.current
     if (!e) return
+    const dt = Math.min(rawDt, 0.1)
     const target = (mobile ? MOBILE : DESKTOP)[sceneState.mode]
     const want = target.bokeh * sceneState.blur
     bokeh.current += (want - bokeh.current) * (1 - Math.exp(-dt * 3))
     e.bokehScale = bokeh.current
     // Keep the hero cell's depth in focus; blur pulls the focal plane forward.
-    const dist = state.camera.position.z - target.pos[2]
-    e.cocMaterial.focusDistance = dist - sceneState.blur * 2.4
+    // Eased at the cell's own rate, so a mode change doesn't pop the focus ahead of the cell.
+    const wantFocus = state.camera.position.z - target.pos[2] - sceneState.blur * 2.4
+    focus.current = focus.current == null ? wantFocus : focus.current + (wantFocus - focus.current) * (1 - Math.exp(-dt * 2.2))
+    e.cocMaterial.focusDistance = focus.current
     e.cocMaterial.focusRange = 1.4
   })
   if (mobile) return null
@@ -217,11 +226,14 @@ function Focus({ mobile }: { mobile: boolean }) {
 
 /** Pauses rendering when the tab is hidden or the scene isn't visible. */
 function Lifecycle({ reduced }: { reduced: boolean }) {
-  const { setFrameloop, invalidate } = useThree()
+  const { setFrameloop, invalidate, get } = useThree()
   useEffect(() => {
     const update = () => {
       const active = !document.hidden && sceneState.visible
-      setFrameloop(!active ? 'never' : reduced ? 'demand' : 'always')
+      const loop = !active ? 'never' : reduced ? 'demand' : 'always'
+      // setFrameloop restarts R3F's clock, so only call it on a real change —
+      // this runs on every scene update, including every scroll frame.
+      if (get().frameloop !== loop) setFrameloop(loop)
       if (active) invalidate()
     }
     update()
@@ -231,7 +243,7 @@ function Lifecycle({ reduced }: { reduced: boolean }) {
       document.removeEventListener('visibilitychange', update)
       off()
     }
-  }, [setFrameloop, invalidate, reduced])
+  }, [setFrameloop, invalidate, get, reduced])
   return null
 }
 

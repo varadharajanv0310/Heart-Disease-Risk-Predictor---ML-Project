@@ -53,6 +53,8 @@ export function SceneHost() {
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
+      // Parallax follows a mouse only: a finger dragging to scroll would tug the cell around.
+      if (e.pointerType !== 'mouse') return
       sceneState.pointer.x = (e.clientX / window.innerWidth) * 2 - 1
       sceneState.pointer.y = -((e.clientY / window.innerHeight) * 2 - 1)
     }
@@ -65,7 +67,9 @@ export function SceneHost() {
   }, [ready])
 
   return (
-    <div data-scene aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 select-none">
+    // 100vh, not inset-0: on phones the toolbars show and hide as you scroll, and a
+    // canvas that tracks them re-frames the whole scene with every change of direction.
+    <div data-scene aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-0 h-screen select-none">
       <StaticCell className={`transition-opacity duration-[1400ms] ease-[var(--e-expo)] ${ready ? 'opacity-0' : 'opacity-100'}`} />
       {enabled && !failed && (
         <div className={`absolute inset-0 transition-opacity duration-[1400ms] ease-[var(--e-expo)] ${ready ? 'opacity-100' : 'opacity-0'}`}>
