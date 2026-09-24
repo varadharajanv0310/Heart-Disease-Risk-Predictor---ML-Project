@@ -1,5 +1,4 @@
-import type { Answers } from '@/lib/risk/assess'
-import { PREVENT_RANGES, inRange } from '@/lib/risk/ranges'
+import { type Answers, asks, preventAge } from '@/lib/risk/assess'
 
 export type StepId =
   | 'symptoms'
@@ -26,7 +25,9 @@ const ORDER: StepId[] = [
 
 export function visibleSteps(a: Answers): StepId[] {
   return ORDER.filter((s) => {
-    if (s === 'pregnant') return a.sex === 'female'
+    if (s === 'pregnant') return asks('pregnant', a)
+    if (s === 'sbp' || s === 'bpTreated') return asks('sbp', a)
+    if (s === 'body' || s === 'egfr') return asks(s, a)
     if (s === 'hdl') return a.totalCholesterol !== 'unknown'
     return true
   })
@@ -48,9 +49,9 @@ export function isAnswered(step: StepId, a: Answers): boolean {
 export function stepBlock(step: StepId, a: Answers) {
   if (step === 'symptoms' && a.symptoms === 'yes') return 'symptoms' as const
   if (step === 'history' && a.history === 'yes') return 'history' as const
-  if (step === 'age' && typeof a.age === 'number' && !inRange(a.age, PREVENT_RANGES.age)) return 'age' as const
   if (step === 'pregnant' && a.pregnant === 'yes') return 'pregnancy' as const
-  if (step === 'sbp' && a.sbp === 'unknown') return 'sbp_unknown' as const
+  // Outside 30–79 there's no equation to feed, so an unknown reading is just "not known".
+  if (step === 'sbp' && a.sbp === 'unknown' && (typeof a.age !== 'number' || preventAge(a.age))) return 'sbp_unknown' as const
   return null
 }
 

@@ -34,11 +34,11 @@ export default function MethodPage() {
   return (
     <div className="gutter pb-10 pt-24 md:pt-28">
       <QuietScene />
-      <Frame className="glass-card px-5 pb-12 pt-20 md:px-12 md:pb-16 md:pt-24" tl={[method.eyebrow, 'Version 1.0.0']} tr={['Last reviewed', '23 Sep 2026']}>
+      <Frame className="glass-card px-5 pb-12 pt-20 md:px-12 md:pb-16 md:pt-24" tl={[method.eyebrow, 'Version 1.1.0']} tr={['Last reviewed', '24 Sep 2026']}>
         <h1 className="max-w-[14ch] text-[clamp(2.8rem,7vw,6.5rem)] font-medium display-tight">{method.title}</h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-blood/90">{method.intro}</p>
         <nav aria-label="On this page" className="mt-10 flex flex-wrap gap-2">
-          {Object.entries({ model: s.model, validity: s.validity, 'heart-age': s.heartAge, unknown: s.unknown, insights: s.insights, verification: s.verification, limits: s.limits, privacy: s.privacy, sources: s.sources, changelog: s.changelog }).map(([id, label]) => (
+          {Object.entries({ model: s.model, validity: s.validity, ages: s.ages, 'heart-age': s.heartAge, unknown: s.unknown, insights: s.insights, verification: s.verification, limits: s.limits, privacy: s.privacy, sources: s.sources, changelog: s.changelog }).map(([id, label]) => (
             <a key={id} href={`#${id}`} className="rounded-pill border border-blood/20 bg-white/70 px-4 py-2 text-[13px] font-medium hover:border-signal hover:text-crimson">
               {label}
             </a>
@@ -96,6 +96,23 @@ export default function MethodPage() {
               ))}
             </ul>
           </div>
+        </Section>
+
+        <Section id="ages" title={s.ages}>
+          <P items={m.ages} />
+          <table className="w-full text-[14px]">
+            <caption className="sr-only">Guideline cut-offs by age</caption>
+            <tbody>
+              {m.ageCutoffs.map(([k, v]) => (
+                <tr key={k} className="border-b border-blood/10 align-top">
+                  <th scope="row" className="py-2 pr-4 text-left font-medium md:w-48">
+                    {k}
+                  </th>
+                  <td className="py-2">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Section>
 
         <Section id="heart-age" title={s.heartAge}>

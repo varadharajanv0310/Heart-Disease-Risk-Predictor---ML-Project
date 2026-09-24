@@ -91,6 +91,34 @@ PREVENT has **no non-laboratory version**, so without cholesterol and eGFR it ca
 
 Both are shown only as a clearly labelled **"Estimate — different model"**. They carry no guideline category and no 30-yr or HF outputs, and come with a note that Framingham tends to over-estimate risk today. Office-model coefficients were cross-checked against published reproductions (women 2.72107 / 0.51125 / 2.81291 / 2.88267 / 0.61868 / 0.77763, S₀ 0.94833, mean 26.0145; men 3.11296 / 0.79277 / 1.85508 / 1.92672 / 0.70953 / 0.53160, S₀ 0.88431, mean 23.9388). Lab-model coefficients match an independent implementation and reproduce both published worked examples (cases 4–5). **Without systolic BP, nothing is computable**, and we show how to get a reading in five minutes.
 
+### Ages outside 30–79 (added in v1.1)
+
+No validated model covers everyone. PREVENT covers 30–79¹, Framingham 30–74⁴, SCORE2 40–69⁵ and SCORE2-OP 70 and over⁶ (both calibrated to European risk regions), and QRISK3 25–84⁷ (UK-only, with 20+ inputs). Stitching models together by age would give people with the same numbers different percentages at an arbitrary birthday. So outside 30–79 we **produce no percentage at all.** Instead, each number is classified against the published guideline cut-off for that age. The result counts how many known numbers are in a healthy range and never combines them into a risk.
+
+| Factor | Ages | Cut-offs (mg/dL, mmHg, kg/m², mL/min/1.73 m²) | Source |
+|---|---|---|---|
+| Systolic BP | 13–17 | normal <120 · elevated 120–129 · stage 1 130–139 · stage 2 ≥140 | AAP 2017³⁰ |
+| Systolic BP | ≥18 | same cut-offs | 2025 AHA/ACC¹² |
+| Systolic BP | <13 | **not assessed**: needs percentile tables by age, sex and height | AAP 2017³⁰ |
+| Total cholesterol | 2–19 | acceptable <170 · borderline 170–199 · high ≥200 | NHLBI 2011³¹ |
+| Total cholesterol | ≥20 | desirable <200 · borderline 200–239 · high ≥240 | NCEP ATP III³² |
+| Non-HDL | 2–19 | acceptable <120 · borderline 120–144 · high ≥145 | NHLBI 2011³¹ |
+| Non-HDL | ≥20 | desirable <130 · above desirable 130–159 · borderline 160–189 · high 190–219 · very high ≥220 | NLA 2015³³ |
+| HDL | 2–19 | acceptable >45 · borderline 40–45 · low <40 | NHLBI 2011³¹ |
+| HDL | ≥20 | low <40 (and <50 in women, from the ATP III metabolic-syndrome criteria) · protective ≥60 | NCEP ATP III³² |
+| BMI | ≥20 | underweight <18.5 · healthy 18.5–24.9 · overweight 25–29.9 · obesity ≥30 | WHO³⁴ |
+| BMI | <20 | **not assessed**: needs BMI-for-age growth charts | WHO³⁴ |
+| eGFR | ≥18 | G1 ≥90 · G2 60–89 (neither is CKD on its own) · G3a 45–59 · G3b 30–44 · G4 15–29 · G5 <15 | KDIGO 2024³⁵ |
+| eGFR | <18 | **not assessed**: CKD-EPI¹⁴ is an adult equation | KDIGO 2024³⁵ |
+| Smoking, diabetes | any | current smoking or diagnosed diabetes → needs attention | Life's Essential 8²⁹ |
+
+**Flow:**
+- The questions that can't be assessed at a given age are skipped: BP under 13, height and weight under 20, eGFR under 18, and pregnancy under 10.
+- The youngest accepted age is 2, the youngest with published cholesterol cut-offs³¹.
+- Outside 30–79, an unknown BP is recorded as "not known" rather than blocking, because no equation needs it there.
+- Symptoms, known CVD and pregnancy still stop the flow at every age.
+- Past 80, the adult cut-offs still describe each number, but treatment decisions are individualised, and the result says so.
+
 ## 4. Clinical context
 
 - **Categories** (2026 ACC/AHA dyslipidemia guideline¹³, 10-yr PREVENT-ASCVD): **Low <3%**, **Borderline 3–<5%**, **Intermediate 5–<10%**, **High ≥10%**. BP context (2025 guideline¹²): with stage 1 hypertension (SBP 130–139), a 10-yr total CVD risk **≥7.5%** favours starting medicine.
@@ -150,3 +178,9 @@ Both are shown only as a clearly labelled **"Estimate — different model"**. Th
 27. Arnett DK, et al. 2019 ACC/AHA guideline on the primary prevention of cardiovascular disease. *Circulation* 2019;140:e596–e646.
 28. Jensen MD, et al. 2013 AHA/ACC/TOS guideline for the management of overweight and obesity in adults. *Circulation* 2014;129:S102–S138.
 29. Lloyd-Jones DM, et al. Life's Essential 8. *Circulation* 2022;146:e18–e43.
+30. Flynn JT, Kaelber DC, Baker-Smith CM, et al. Clinical practice guideline for screening and management of high blood pressure in children and adolescents. *Pediatrics* 2017;140(3):e20171904.
+31. Expert Panel on Integrated Guidelines for Cardiovascular Health and Risk Reduction in Children and Adolescents. Summary report. *Pediatrics* 2011;128(Suppl 5):S213–S256.
+32. NCEP Expert Panel. Third report on detection, evaluation, and treatment of high blood cholesterol in adults (ATP III), final report. *Circulation* 2002;106:3143–3421.
+33. Jacobson TA, Ito MK, Maki KC, et al. National Lipid Association recommendations for patient-centered management of dyslipidemia: part 1 — full report. *J Clin Lipidol* 2015;9:129–169.
+34. World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO; 2000.
+35. KDIGO 2024 clinical practice guideline for the evaluation and management of chronic kidney disease. *Kidney Int* 2024;105(4S):S117–S314.

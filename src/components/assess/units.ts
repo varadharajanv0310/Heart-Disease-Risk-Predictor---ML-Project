@@ -8,9 +8,14 @@ const inward = (min: number, max: number, dp: number) => {
   return { min: Math.ceil(min * f - 1e-9) / f, max: Math.floor(max * f + 1e-9) / f }
 }
 
+/** No model range: every age gets a result (PREVENT at 30–79, a guideline check otherwise). */
 export const AGE: UnitSpec[] = [
-  { id: 'y', label: 'years', toDisplay: id, toCanonical: id, decimals: 0, step: 1, slider: { min: 18, max: 100 }, plausible: PLAUSIBLE.age, model: PREVENT_RANGES.age },
+  { id: 'y', label: 'years', toDisplay: id, toCanonical: id, decimals: 0, step: 1, slider: { min: 2, max: 110 }, plausible: PLAUSIBLE.age },
 ]
+
+/** Outside PREVENT's ages, model-range warnings don't apply: every value is checked against its guideline. */
+export const forAge = (units: UnitSpec[], age: number | undefined): UnitSpec[] =>
+  age === undefined || (age >= PREVENT_RANGES.age.min && age <= PREVENT_RANGES.age.max) ? units : units.map((u) => ({ ...u, model: undefined }))
 
 export const SBP: UnitSpec[] = [
   { id: 'mmHg', label: 'mmHg', toDisplay: id, toCanonical: id, decimals: 0, step: 1, slider: { min: 80, max: 220 }, plausible: PLAUSIBLE.sbp, model: PREVENT_RANGES.sbp },

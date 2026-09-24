@@ -6,12 +6,13 @@
  */
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { blocks, calculating as calcCopy, results as copy } from '@/content/copy'
+import { blocks, calculating as calcCopy, results as copy, questions as questionsCopy } from '@/content/copy'
 import { type Prefs, store, useHydrated, useStored } from '@/lib/answers-store'
 import { gsap } from '@/lib/gsap'
 import { encodeReport } from '@/lib/report-link'
 import { type Answers, type Assessment, assess } from '@/lib/risk/assess'
 import { NO_CHANGE, type WhatIf, applyWhatIf, whatIfLimits } from '@/lib/risk/drivers'
+import { type FactorCheck, type FactorId, tally } from '@/lib/risk/factors'
 import { heartAge as heartAgeOf } from '@/lib/risk/framingham'
 import { preventRisk } from '@/lib/risk/prevent'
 import type { ClinicalInput, Computed } from '@/lib/risk/types'
@@ -22,7 +23,7 @@ import { IS_ARTIFACT } from '@/lib/target'
 import { Arrow, ButtonLink } from '../ui/Button'
 import { Frame } from '../ui/Frame'
 import { QrCode } from '../ui/QrCode'
-import { CategoryScale, GiantNumber, HeartAgePair, ReasonList, pct } from './parts'
+import { BandBadge, CategoryScale, GiantNumber, HeartAgePair, ReasonList, factorTarget, factorValue, noteText, pct } from './parts'
 
 /** Risk % → scene intensity: calm & bright at ~1%, deep & heavy by ~30%. */
 export const intensityFor = (risk: number) => Math.min(1, Math.max(0, Math.log(Math.max(risk, 1)) / Math.log(30)))
@@ -78,30 +79,35 @@ export function Results() {
   useEffect(() => {
     if (a.kind === 'prevent' && a.headline.status === 'ok') setScene({ intensity: intensityFor(a.headline.value) })
     else if (a.kind === 'estimate' && a.estimate.status === 'ok') setScene({ intensity: intensityFor(a.estimate.value) })
+    else if (a.kind === 'factors') {
+      const t = tally(a.factors)
+      setScene({ intensity: 0.15 + 0.6 * (1 - t.healthy / Math.max(t.assessed, 1)) })
+    }
     else setScene({ mode: 'quiet', blur: 0.8, intensity: 0.3 })
   }, [a])
 
   if (!hydrated) return <div className="min-h-[100svh]" aria-busy="true" />
 
   if (a.kind === 'blocked') return <Empty reason={a.reason} />
-  if (phase === 'calc') return <Calculating />
+  if (phase === 'calc') return <Calculating lines={a.kind === 'factors' ? calcCopy.linesFactors : calcCopy.lines} />
+  if (a.kind === 'factors') return <FactorResults a={a} answers={answers} prefs={prefs} />
   return a.kind === 'prevent' ? <PreventResults a={a} answers={answers} prefs={prefs} /> : <EstimateResults a={a} answers={answers} prefs={prefs} />
 }
 
 // ── Calculating ─────────────────────────────────────────────────────────
 
-function Calculating() {
+function Calculating({ lines }: { lines: string[] }) {
   const [i, setI] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setI((n) => Math.min(n + 1, calcCopy.lines.length - 1)), 560)
+    const t = setInterval(() => setI((n) => Math.min(n + 1, lines.length - 1)), 560)
     return () => clearInterval(t)
-  }, [])
+  }, [lines])
   return (
     <div className="flex min-h-[100svh] flex-col items-center justify-center gap-6 text-center" role="status" aria-live="polite">
       <span className="sr-only">{calcCopy.sr}</span>
       <span aria-hidden className="beat inline-block h-3 w-3 rounded-full bg-signal" />
       <p aria-hidden className="pixel rounded-pill bg-white/90 px-3 py-1.5 text-[13px] text-crimson">
-        {calcCopy.lines[i]}
+        {lines[i]}
       </p>
     </div>
   )
@@ -109,7 +115,7 @@ function Calculating() {
 
 // ── Empty & blocked ─────────────────────────────────────────────────────
 
-function Empty({ reason }: { reason: Exclude<Assessment, { kind: 'prevent' } | { kind: 'estimate' }>['reason'] }) {
+function Empty({ reason }: { reason: Extract<Assessment, { kind: 'blocked' }>['reason'] }) {
   const b = reason !== 'incomplete' ? blocks[reason] : null
   useEffect(() => setScene({ mode: 'quiet', blur: 0.8 }), [])
   return (
@@ -478,7 +484,7 @@ function Slider({
   )
 }
 
-function Notes({ a }: { a: PreventA | Extract<Assessment, { kind: 'estimate' }> }) {
+function Notes({ a }: { a: Exclude<Assessment, { kind: 'blocked' }> }) {
   if (!a.notes.length) return null
   return (
     <section className="gutter mx-auto mt-4 max-w-6xl" aria-label="Notes about your result">
@@ -488,7 +494,7 @@ function Notes({ a }: { a: PreventA | Extract<Assessment, { kind: 'estimate' }> 
             <span aria-hidden className="pixel mt-0.5 text-blood">
               !
             </span>
-            <span>{copy.notes[n]}</span>
+            <span>{noteText(a, n)}</span>
           </li>
         ))}
       </ul>
@@ -496,19 +502,23 @@ function Notes({ a }: { a: PreventA | Extract<Assessment, { kind: 'estimate' }> 
   )
 }
 
-function NextSteps({ input, category }: { input: ClinicalInput; category: PreventA['category'] }) {
+function NextSteps({ input, category, factors }: { input: ClinicalInput; category: PreventA['category']; factors?: FactorCheck[] }) {
   const n = copy.nextSteps
+  const young = input.age < 18
   const nonHdl = input.totalCholesterol != null && input.hdl != null ? input.totalCholesterol - input.hdl : 0
+  // With a guideline check, the age-specific lipid bands decide; otherwise the adult cut-off and risk category do.
+  const offRange = (ids: FactorId[]) => !!factors?.some((f) => ids.includes(f.id) && (f.band === 'watch' || f.band === 'high'))
+  const cholesterol = factors ? offRange(['totalCholesterol', 'nonHdl', 'hdl']) : nonHdl > 130 || category === 'intermediate' || category === 'high'
   const items = [
-    n.share,
-    (input.sbp ?? 0) >= 130 && n.bp,
+    young ? n.shareYoung : n.share,
+    (input.sbp ?? 0) >= 130 && (young ? n.bpYoung : n.bp),
     input.smoker && n.smoking,
-    (nonHdl > 130 || category === 'intermediate' || category === 'high') && n.cholesterol,
+    cholesterol && (input.age < 20 ? n.cholesterolYoung : n.cholesterol),
     input.diabetes && n.diabetes,
-    n.activity,
+    young ? n.activityYoung : n.activity,
     (input.bmi ?? 0) >= 25 && n.weight,
-    n.sleep,
-    n.recheck,
+    young ? n.sleepYoung : n.sleep,
+    factors && input.age < 30 ? n.from30 : n.recheck,
   ].filter(Boolean) as string[]
   return (
     <section className="gutter mx-auto mt-4 max-w-6xl" aria-labelledby="next-h">
@@ -650,5 +660,93 @@ function EstimateResults({ a, answers, prefs }: { a: Extract<Assessment, { kind:
       <NextSteps input={a.input} category={null} />
       <Actions answers={answers} prefs={prefs} />
     </div>
+  )
+}
+
+// ── Guideline check (ages outside PREVENT's 30–79) ─────────────────────
+
+type FactorsA = Extract<Assessment, { kind: 'factors' }>
+
+function FactorResults({ a, answers, prefs }: { a: FactorsA; answers: Answers; prefs: Prefs }) {
+  const F = copy.factors
+  const { healthy, assessed } = tally(a.factors)
+  const age = a.input.age
+  return (
+    <div className="pb-10">
+      <section className="gutter flex min-h-[100svh] flex-col pb-4 pt-20 md:pb-6 md:pt-24" aria-labelledby="result-h">
+        <Frame className="flex flex-1 flex-col justify-center" tl={[F.label, F.outcome]} tr={['Method', F.method]} bl={['Age', String(age)]} br={[F.noPct, F.preventAges]}>
+          <div className="relative isolate px-4 py-24 text-center md:px-10">
+            {/* Ref 1's pale centre: keeps the red number legible over the ring. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(78vmin,700px)] w-[min(118vmin,1040px)] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,255,255,0.92),rgba(255,244,245,0.6)_58%,rgba(255,255,255,0))]"
+            />
+            <div className="mb-6">
+              <p className="inline-flex items-center gap-2 rounded-pill border border-blood/30 bg-white/80 px-4 py-2 text-[13px] font-semibold text-blood">
+                <span aria-hidden className="pixel text-crimson">
+                  ∅
+                </span>
+                {F.badge}
+              </p>
+            </div>
+            <h1 id="result-h" className="sr-only">
+              {`${F.label}: ${F.outcome}`}
+            </h1>
+            <p aria-hidden className="inline-flex items-start text-[clamp(7rem,24vw,20rem)] font-normal leading-none tracking-[-0.06em] text-signal tabular">
+              {healthy}
+              <span className="mt-[0.08em] text-[0.42em] text-blood/70">/{assessed}</span>
+            </p>
+            <p className="mx-auto mt-6 max-w-xl text-[clamp(1.05rem,1.6vw,1.35rem)] leading-snug text-blood">{F.tally(healthy, assessed)}</p>
+            <p className="mx-auto mt-8 max-w-2xl text-[20px] font-medium">{F.title[a.ageBand]}</p>
+            <p className="mx-auto mt-3 max-w-2xl text-[16px] leading-relaxed text-blood/85">
+              {F.body[a.ageBand](age)}
+              {age < 18 && ` ${F.child}`}
+            </p>
+          </div>
+        </Frame>
+      </section>
+      <p className="gutter mx-auto mt-2 max-w-4xl text-center text-[13px] text-blood/80">{copy.disclaimer}</p>
+      <FactorList a={a} chol={prefs.chol} />
+      <Notes a={a} />
+      <NextSteps input={a.input} category={null} factors={a.factors} />
+      <Actions answers={answers} prefs={prefs} />
+    </div>
+  )
+}
+
+function FactorList({ a, chol }: { a: FactorsA; chol: Prefs['chol'] }) {
+  const F = copy.factors
+  return (
+    <section className="gutter mx-auto mt-20 max-w-6xl" aria-labelledby="factors-h">
+      <div className="glass-card p-7 md:p-10">
+        <h2 id="factors-h" className="text-[clamp(1.6rem,3vw,2.4rem)] font-medium tracking-[-0.03em]">
+          {F.listTitle}
+        </h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-blood/85">{F.listBody}</p>
+        <ul className="mt-8 border-t border-blood/10">
+          {a.factors.map((f) => (
+            <li key={f.id} className="grid gap-3 border-b border-blood/10 py-5 md:grid-cols-[15rem_1fr_13rem] md:gap-6">
+              <div>
+                <p className="font-semibold">{F.labels[f.id]}</p>
+                <p className="mt-0.5 text-[14px] text-blood/80 tabular">{factorValue(f, chol)}</p>
+              </div>
+              <div>
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <BandBadge band={f.band} />
+                  {f.category && <span className="text-[15px] font-medium">{(F.categories[f.id] as Record<string, string>)[f.category]}</span>}
+                </p>
+                <p className="mt-2 text-[14px] leading-relaxed text-blood/80">{factorTarget(f, a.input, chol)}</p>
+                {f.category === 'stage2Severe' && (
+                  <p role="alert" className="mt-3 rounded-2xl bg-crimson p-4 text-[14px] leading-relaxed text-white">
+                    {questionsCopy.sbp.crisis}
+                  </p>
+                )}
+              </div>
+              <p className="text-[12px] text-blood/70 md:text-right">{f.source ? F.sources[f.source] : ''}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   )
 }

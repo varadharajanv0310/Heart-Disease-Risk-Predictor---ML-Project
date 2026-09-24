@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { results as copy, reasons } from '@/content/copy'
+import type { Prefs } from '@/lib/answers-store'
 import { prefersReducedMotion } from '@/hooks/use-media'
 import { CATEGORY_ORDER, type Category } from '@/lib/risk/categories'
+import type { Assessment, Note } from '@/lib/risk/assess'
+import type { Band, FactorCheck } from '@/lib/risk/factors'
 import type { HeartAge } from '@/lib/risk/framingham'
-import type { Computed, NotComputableReason } from '@/lib/risk/types'
-import { round } from '@/lib/risk/units'
+import type { ClinicalInput, Computed, NotComputableReason } from '@/lib/risk/types'
+import { cholesterol, round } from '@/lib/risk/units'
 import { gsap } from '@/lib/gsap'
 
 export const pct = (v: number) => `${round(v, 1).toFixed(1)}%`
@@ -150,3 +153,74 @@ export function HeartAgePair({ age, heart }: { age: number; heart: HeartAge }) {
     </div>
   )
 }
+
+// ── Guideline check ─────────────────────────────────────────────────────
+
+const BAND_GLYPH: Record<Band, string> = { healthy: '✓', watch: '!', high: '▲', unknown: '?', not_assessed: '–' }
+const BAND_STYLE: Record<Band, string> = {
+  healthy: 'bg-blush text-blood',
+  watch: 'bg-[#fcd2d6] text-blood',
+  high: 'bg-crimson text-white',
+  unknown: 'border border-blood/25 text-blood',
+  not_assessed: 'border border-blood/25 text-blood/80',
+}
+
+/** A band is always a glyph plus words; colour only reinforces it. */
+export function BandBadge({ band }: { band: Band }) {
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-pill px-2.5 py-1 text-[12px] font-semibold ${BAND_STYLE[band]}`}>
+      <span aria-hidden>{BAND_GLYPH[band]}</span>
+      {copy.factors.bands[band]}
+    </span>
+  )
+}
+
+/** Formats a factor's value in the person's own units. */
+export function factorValue(f: FactorCheck, chol: Prefs['chol']): string {
+  if (f.value == null) return f.id === 'smoking' || f.id === 'diabetes' ? '' : copy.factors.notGiven
+  switch (f.id) {
+    case 'bp':
+      return `${Math.round(f.value)} mmHg`
+    case 'totalCholesterol':
+    case 'nonHdl':
+    case 'hdl':
+      return chol === 'mmol' ? `${cholesterol.toMmol(f.value).toFixed(2)} mmol/L` : `${Math.round(f.value)} mg/dL`
+    case 'bmi':
+      return `${round(f.value, 1).toFixed(1)} kg/m²`
+    case 'egfr':
+      return `${Math.round(f.value)} mL/min/1.73m²`
+    default:
+      return ''
+  }
+}
+
+/** The guideline cut-off sentence for one factor. */
+export function factorTarget(f: FactorCheck, input: ClinicalInput, chol: Prefs['chol']): string {
+  const F = copy.factors
+  if (f.band === 'not_assessed') return F.notAssessed[f.reason!]
+  if (f.band === 'unknown') return F.unknown
+  const c = (mg: number) => (chol === 'mmol' ? `${cholesterol.toMmol(mg).toFixed(1)} mmol/L` : `${mg} mg/dL`)
+  const young = input.age < 20
+  switch (f.id) {
+    case 'bp':
+      return F.target.bp()
+    case 'totalCholesterol':
+      return F.target.totalCholesterol(young, c)
+    case 'nonHdl':
+      return F.target.nonHdl(young, c)
+    case 'hdl':
+      return F.target.hdl(young, c, input.sex === 'female')
+    case 'bmi':
+      return F.target.bmi()
+    case 'egfr':
+      return F.target.egfr()
+    case 'smoking':
+      return F.target.smoking(input.smoker)
+    case 'diabetes':
+      return F.target.diabetes(input.diabetes)
+  }
+}
+
+/** A note's text; a guideline check (no equation behind it) has its own wording for some. */
+export const noteText = (a: Exclude<Assessment, { kind: 'blocked' }>, n: Note) =>
+  (a.kind === 'factors' ? (copy.factors.notes as Partial<Record<Note, string>>)[n] : undefined) ?? copy.notes[n]

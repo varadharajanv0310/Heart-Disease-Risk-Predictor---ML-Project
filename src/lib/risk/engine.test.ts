@@ -113,10 +113,10 @@ describe('assess()', () => {
     expect(a.prevent.tenYear.hf.status === 'ok' && round(a.prevent.tenYear.hf.value, 1)).toBe(8.1)
   })
 
-  it('blocks for symptoms, known heart disease, age and pregnancy', () => {
+  it('blocks for symptoms, known heart disease and pregnancy — never for age', () => {
     expect(assess({ ...complete, symptoms: 'yes' })).toEqual({ kind: 'blocked', reason: 'symptoms' })
     expect(assess({ ...complete, history: 'yes' })).toEqual({ kind: 'blocked', reason: 'history' })
-    expect(assess({ ...complete, age: 82 })).toEqual({ kind: 'blocked', reason: 'age' })
+    expect(assess({ ...complete, age: 82 }).kind).toBe('factors')
     expect(assess({ ...complete, pregnant: 'yes' })).toEqual({ kind: 'blocked', reason: 'pregnancy' })
     expect(assess({ ...complete, sbp: 'unknown' })).toEqual({ kind: 'blocked', reason: 'sbp_unknown' })
   })

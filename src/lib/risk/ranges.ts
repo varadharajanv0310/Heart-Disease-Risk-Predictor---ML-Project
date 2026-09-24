@@ -33,9 +33,12 @@ export const FRAMINGHAM_RANGES = {
  * Plausibility bounds for the input UI. Values outside these are almost
  * certainly typos and are rejected at entry; values inside them but outside
  * the model range are accepted and reported as "not computable".
+ *
+ * Age starts at 2, the youngest age with published cholesterol cut-offs
+ * (NHLBI 2011). Ages outside PREVENT's 30–79 get a guideline check instead.
  */
 export const PLAUSIBLE = {
-  age: { min: 18, max: 110 },
+  age: { min: 2, max: 120 },
   sbp: { min: 60, max: 260 },
   totalCholesterol: { min: 50, max: 600 },
   hdl: { min: 5, max: 200 },

@@ -2,13 +2,16 @@
  * From questionnaire answers to a complete, honest assessment.
  *
  * Decision order:
- *   1. Safety & eligibility blocks (symptoms, known CVD, age, pregnancy).
- *   2. No systolic BP → nothing is computable.
- *   3. Cholesterol and eGFR known → PREVENT (headline = 10-yr ASCVD).
- *   4. Otherwise → a clearly labelled Framingham *estimate*.
+ *   1. Safety & eligibility blocks (symptoms, known CVD, pregnancy).
+ *   2. Age outside PREVENT's 30–79 → a guideline check of each number, with
+ *      no risk percentage. Any age from 2 gets a result; none is extrapolated.
+ *   3. No systolic BP → nothing is computable.
+ *   4. Cholesterol and eGFR known → PREVENT (headline = 10-yr ASCVD).
+ *   5. Otherwise → a clearly labelled Framingham *estimate*.
  */
 import { BP_GUIDELINE_CVD_THRESHOLD, type Category, categorize } from './categories'
 import { type DriverAnalysis, analyseDrivers } from './drivers'
+import { FACTOR_MIN_AGE, type FactorCheck, checkFactors } from './factors'
 import { type HeartAge, framinghamLab, framinghamOffice, heartAge } from './framingham'
 import { type PreventResult, preventAll } from './prevent'
 import type { Sex } from './prevent-coefficients'
@@ -40,7 +43,7 @@ export interface Answers {
   familyHistory?: YesNo | 'skip'
 }
 
-export type BlockReason = 'symptoms' | 'history' | 'age' | 'pregnancy' | 'sbp_unknown' | 'incomplete'
+export type BlockReason = 'symptoms' | 'history' | 'pregnancy' | 'sbp_unknown' | 'incomplete'
 
 export type Note =
   | 'south_asian'
@@ -61,6 +64,14 @@ export type Assessment =
       category: Category | null
       heartAge: HeartAge
       drivers: DriverAnalysis | null
+      notes: Note[]
+    }
+  | {
+      kind: 'factors'
+      input: ClinicalInput
+      /** Why there's no percentage: PREVENT starts at 30 and stops at 79. */
+      ageBand: 'under30' | 'over79'
+      factors: FactorCheck[]
       notes: Note[]
     }
   | {
@@ -94,24 +105,40 @@ export function toClinicalInput(a: Answers): ClinicalInput | null {
   }
 }
 
-/** Which answers are required before we can compute anything. */
-const REQUIRED: (keyof Answers)[] = [
-  'symptoms', 'history', 'age', 'sex', 'sbp', 'bpTreated', 'totalCholesterol', 'hdl',
-  'statin', 'diabetes', 'smoker', 'heightCm', 'weightKg', 'egfr',
-]
+/** PREVENT covers this age. Outside it, results are a guideline check with no percentage. */
+export const preventAge = (age: number) => inRange(age, PREVENT_RANGES.age)
 
+/** Youngest age we ask about pregnancy. */
+export const PREGNANCY_MIN_AGE = 10
+
+/**
+ * Questions that only apply from a certain age: below it, their guideline needs
+ * charts or equations we don't have, so we don't ask. Unknown age → ask.
+ */
+export function asks(question: 'sbp' | 'body' | 'egfr' | 'pregnant', a: Answers): boolean {
+  if (question === 'pregnant' && a.sex !== 'female') return false
+  if (a.age == null) return true
+  const min = question === 'sbp' ? FACTOR_MIN_AGE.bp : question === 'body' ? FACTOR_MIN_AGE.bmi : question === 'egfr' ? FACTOR_MIN_AGE.egfr : PREGNANCY_MIN_AGE
+  return a.age >= min
+}
+
+/** Which answers are required before we can compute anything. */
 export function missingAnswers(a: Answers): (keyof Answers)[] {
-  const missing = REQUIRED.filter((k) => a[k] === undefined)
-  if (a.sex === 'female' && a.pregnant === undefined) missing.push('pregnant')
-  return missing
+  const required: (keyof Answers)[] = ['symptoms', 'history', 'age', 'sex']
+  if (asks('pregnant', a)) required.push('pregnant')
+  if (asks('sbp', a)) required.push('sbp', 'bpTreated')
+  required.push('totalCholesterol', 'hdl', 'statin', 'diabetes', 'smoker')
+  if (asks('body', a)) required.push('heightCm', 'weightKg')
+  if (asks('egfr', a)) required.push('egfr')
+  return required.filter((k) => a[k] === undefined)
 }
 
 export function blockReason(a: Answers): BlockReason | null {
   if (a.symptoms === 'yes') return 'symptoms'
   if (a.history === 'yes') return 'history'
-  if (a.age != null && !inRange(a.age, PREVENT_RANGES.age)) return 'age'
-  if (a.sex === 'female' && a.pregnant === 'yes') return 'pregnancy'
-  if (a.sbp === 'unknown') return 'sbp_unknown'
+  if (asks('pregnant', a) && a.pregnant === 'yes') return 'pregnancy'
+  // Every risk equation needs blood pressure; a guideline check doesn't.
+  if (a.sbp === 'unknown' && (a.age == null || preventAge(a.age))) return 'sbp_unknown'
   return null
 }
 
@@ -131,6 +158,25 @@ export function assess(a: Answers): Assessment {
   const input = toClinicalInput(a)
   if (!input) return { kind: 'blocked', reason: 'incomplete' }
   const notes = contextNotes(a)
+
+  if (!preventAge(input.age)) {
+    // Answers left from an earlier, different age may still be stored: only
+    // count the questions this age was asked.
+    const asked: ClinicalInput = {
+      ...input,
+      sbp: asks('sbp', a) ? input.sbp : null,
+      bpTreated: asks('sbp', a) && input.bpTreated,
+      bmi: asks('body', a) ? input.bmi : null,
+      egfr: asks('egfr', a) ? input.egfr : null,
+    }
+    return {
+      kind: 'factors',
+      input: asked,
+      ageBand: input.age < PREVENT_RANGES.age.min ? 'under30' : 'over79',
+      factors: checkFactors(asked),
+      notes,
+    }
+  }
 
   const lipidsKnown = input.totalCholesterol != null && input.hdl != null
   const egfrKnown = input.egfr != null

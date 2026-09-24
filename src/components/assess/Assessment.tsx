@@ -5,8 +5,9 @@
  *
  * - Answers persist to localStorage on every change (this device only).
  * - Enter = next, Esc = back. Focus moves to the new question each step.
- * - Safety first: symptoms, prior heart disease, age and pregnancy stop the
- *   flow with an explanation rather than a number.
+ * - Safety first: symptoms, prior heart disease and pregnancy stop the flow
+ *   with an explanation rather than a number. Every age from 2 continues:
+ *   questions whose guideline doesn't cover an age are skipped.
  */
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -14,7 +15,7 @@ import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from 
 import { flushSync } from 'react-dom'
 import { assess as copy, blocks, questions as q } from '@/content/copy'
 import { store, useHydrated, useStored } from '@/lib/answers-store'
-import type { Answers, BlockReason } from '@/lib/risk/assess'
+import { type Answers, type BlockReason, preventAge } from '@/lib/risk/assess'
 import { ckdEpi2021 } from '@/lib/risk/ckd-epi'
 import { PREVENT_RANGES, PLAUSIBLE, inRange } from '@/lib/risk/ranges'
 import { bmi as bmiOf, length, mass, round } from '@/lib/risk/units'
@@ -22,7 +23,7 @@ import { setScene } from '@/lib/scene-store'
 import { Arrow, Button } from '../ui/Button'
 import { Choice, Help, NumberField, UnknownButton } from './fields'
 import { type StepId, firstOpenStep, isAnswered, stepBlock, visibleSteps } from './steps'
-import { AGE, CREATININE, EGFR, HDL, SBP, TOTAL_CHOL } from './units'
+import { AGE, CREATININE, EGFR, HDL, SBP, TOTAL_CHOL, forAge } from './units'
 
 type YN = 'yes' | 'no'
 const YES_NO = [
@@ -352,6 +353,13 @@ function Question({ step, answers: a, prefs, set, headingId: h, onPick, onEdit }
           <div className="mt-8">
             <NumberField id="age" label={q.age.label} value={num(a.age)} onChange={(v) => set('age', v === undefined ? undefined : Math.round(v))} units={AGE} unit="y" describedBy={help} />
           </div>
+          {typeof a.age === 'number' && !preventAge(a.age) && (
+            <p className="-mt-2 max-w-xl rounded-2xl border border-blood/10 bg-white/70 p-4 text-[14px] leading-relaxed text-blood" aria-live="polite">
+              <span className="pixel mr-2 text-[11px] text-crimson">{q.age.outsideTag}</span>
+              {a.age < 30 ? q.age.under30 : q.age.over79}
+              {a.age < 18 && ` ${q.age.child}`}
+            </p>
+          )}
         </>
       )
     case 'sex':
@@ -386,7 +394,7 @@ function Question({ step, answers: a, prefs, set, headingId: h, onPick, onEdit }
             {q.sbp.label}
           </Title>
           <div className="mt-8">
-            <NumberField id="sbp" label={q.sbp.label} value={v} onChange={(x) => set('sbp', x === undefined ? undefined : Math.round(x))} units={SBP} unit="mmHg" describedBy={help} />
+            <NumberField id="sbp" label={q.sbp.label} value={v} onChange={(x) => set('sbp', x === undefined ? undefined : Math.round(x))} units={forAge(SBP, num(a.age))} unit="mmHg" describedBy={help} />
           </div>
           {v !== undefined && v >= 180 && (
             <div role="alert" className="mt-2 rounded-2xl bg-crimson p-4 text-[14px] leading-relaxed text-white">
@@ -415,7 +423,7 @@ function Question({ step, answers: a, prefs, set, headingId: h, onPick, onEdit }
                 set('totalCholesterol', x)
                 if (x !== undefined && a.hdl === 'unknown') set('hdl', undefined)
               }}
-              units={TOTAL_CHOL}
+              units={forAge(TOTAL_CHOL, num(a.age))}
               unit={prefs.chol}
               onUnitChange={(u) => store.setPref('chol', u as 'mgdl' | 'mmol')}
               describedBy={help}
@@ -442,7 +450,7 @@ function Question({ step, answers: a, prefs, set, headingId: h, onPick, onEdit }
             {q.hdl.label}
           </Title>
           <div className="mt-8">
-            <NumberField id="hdl" label={q.hdl.label} value={num(a.hdl)} onChange={(x) => set('hdl', x)} units={HDL} unit={prefs.chol} onUnitChange={(u) => store.setPref('chol', u as 'mgdl' | 'mmol')} describedBy={help} />
+            <NumberField id="hdl" label={q.hdl.label} value={num(a.hdl)} onChange={(x) => set('hdl', x)} units={forAge(HDL, num(a.age))} unit={prefs.chol} onUnitChange={(u) => store.setPref('chol', u as 'mgdl' | 'mmol')} describedBy={help} />
           </div>
           <UnknownButton label={q.hdl.unknown} active={a.hdl === 'unknown'} onClick={() => set('hdl', a.hdl === 'unknown' ? undefined : 'unknown')} />
           <Help>{q.hdl.where}</Help>
@@ -597,7 +605,7 @@ function BodyStep({ a, prefs, h }: { a: Answers; prefs: QProps['prefs']; h: stri
         {!err && bmi !== undefined && (
           <p className="text-blood/85">
             <span className="pixel mr-2 text-blood">{q.body.bmi(round(bmi, 1).toFixed(1))}</span>
-            {!inRange(bmi, PREVENT_RANGES.bmi) && q.body.bmiOut}
+            {typeof a.age === 'number' && preventAge(a.age) && !inRange(bmi, PREVENT_RANGES.bmi) && q.body.bmiOut}
           </p>
         )}
       </div>
@@ -628,7 +636,7 @@ function EgfrStep({ a, set, h, prefs }: { a: Answers; set: QProps['set']; h: str
         {q.egfr.label}
       </Title>
       <div className="mt-8">
-        <NumberField id="egfr" label={q.egfr.label} value={num(a.egfr)} onChange={(x) => set('egfr', x === undefined ? undefined : Math.round(x))} units={EGFR} unit="egfr" describedBy={`${h}-help`} />
+        <NumberField id="egfr" label={q.egfr.label} value={num(a.egfr)} onChange={(x) => set('egfr', x === undefined ? undefined : Math.round(x))} units={forAge(EGFR, num(a.age))} unit="egfr" describedBy={`${h}-help`} />
       </div>
       <UnknownButton label={q.egfr.unknown} active={a.egfr === 'unknown'} onClick={() => set('egfr', a.egfr === 'unknown' ? undefined : 'unknown')} />
       <Help>{q.egfr.where}</Help>
@@ -699,13 +707,14 @@ function Review({ a, prefs, h, onEdit }: { a: Answers; prefs: QProps['prefs']; h
     ['egfr', 'eGFR', typeof a.egfr === 'number' ? `${a.egfr} mL/min/1.73m²` : a.egfr === 'unknown' ? r.unknown : r.notAnswered],
     ['context', 'South Asian ancestry · early family history', `${yn(a.southAsian)} · ${yn(a.familyHistory)}`],
   ]
+  const shown = rows.filter(([s]) => visibleSteps(a).includes(s))
   return (
     <>
       <Title id={h} help={r.help}>
         {r.label}
       </Title>
       <dl className="mt-8 divide-y divide-blood/10 border-y border-blood/10">
-        {rows.map(([s, k, v]) => (
+        {shown.map(([s, k, v]) => (
           <div key={s} className="flex items-center justify-between gap-4 py-3">
             <dt className="text-[14px] text-blood/80">{k}</dt>
             <dd className="flex items-center gap-3 text-right text-[15px] font-medium text-blood">
@@ -772,7 +781,6 @@ function BlockScreen({ reason, onClose }: { reason: Exclude<BlockReason, 'incomp
             onClick={() => {
               if (reason === 'sbp_unknown') store.setAnswer('sbp', undefined)
               if (reason === 'pregnancy') store.setAnswer('pregnant', undefined)
-              if (reason === 'age') store.setAnswer('age', undefined)
               onClose()
             }}
           >
@@ -785,7 +793,7 @@ function BlockScreen({ reason, onClose }: { reason: Exclude<BlockReason, 'incomp
               {b.secondary}
             </button>
           ) : (
-            <Link href={reason === 'age' ? '/method/' : '/'} className="inline-flex min-h-12 items-center rounded-pill border border-blood/20 px-6 font-medium text-blood hover:border-signal">
+            <Link href="/" className="inline-flex min-h-12 items-center rounded-pill border border-blood/20 px-6 font-medium text-blood hover:border-signal">
               {b.secondary}
             </Link>
           ))}

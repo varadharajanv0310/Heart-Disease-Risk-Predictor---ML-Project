@@ -25,7 +25,7 @@ x = β₀ + Σ βᵢ·termᵢ + treatment and age interactions      risk = eˣ/(
   rangesNote:
     'Outside these ranges we show “not computable” for the affected results. We never extrapolate an equation beyond the data it was built on.',
   validFor: [
-    'Adults aged 30 to 79.',
+    'Risk percentages: adults aged 30 to 79. Everyone else from age 2 gets a guideline check of each number instead — see “Every age” below.',
     'People who have not had a heart attack, stroke, heart failure, or a procedure such as a stent or bypass.',
     'People who know their blood pressure, cholesterol and kidney function — or who want a clearly labelled rough estimate without them.',
   ],
@@ -35,8 +35,22 @@ x = β₀ + Σ βᵢ·termᵢ + treatment and age interactions      risk = eˣ/(
     'Pregnancy. Blood pressure and cholesterol shift temporarily, so the inputs don’t reflect usual levels. This is our precaution, not a PREVENT exclusion.',
     'People with LDL cholesterol of 190 mg/dL (4.9 mmol/L) or higher. Guidelines recommend treatment regardless of calculated risk.',
     'People with kidney failure (eGFR under 15) or on dialysis.',
-    'Children and anyone under 30, or over 79.',
+    'A risk percentage for anyone under 30 or over 79. PREVENT wasn’t built on those ages, so they get a guideline check with no percentage.',
   ],
+  ages: [
+    'PREVENT was developed on adults aged 30 to 79. Outside that range, any percentage would be an extrapolation, so Focal doesn’t produce one. Instead, every age from 2 gets a guideline check: each number is compared with the published cut-off for that age, and labelled healthy, worth watching, or needing attention.',
+    'The check never combines numbers into a risk. It counts how many known numbers sit in a healthy range, and says which guideline each comparison comes from. Questions whose guideline needs data we don’t collect are skipped: children’s blood pressure (under 13) is read on percentile charts for age, sex and height; BMI under 20 uses growth charts; and kidney function under 18 uses pediatric equations. Those factors are marked “not assessed”, never guessed.',
+    'Past 80, the same adult cut-offs still describe each number, but treatment decisions are individual — they weigh overall health, other conditions and personal priorities. Focal says so on the result.',
+  ],
+  ageCutoffs: [
+    ['Systolic blood pressure', '13 and over: normal <120, elevated 120–129, stage 1 130–139, stage 2 ≥140 mmHg (AAP 2017 for 13–17; 2025 AHA/ACC for adults). Under 13: not assessed.'],
+    ['Total cholesterol', '2–19: acceptable <170, borderline 170–199, high ≥200 mg/dL (NHLBI 2011). 20+: desirable <200, borderline 200–239, high ≥240 (NCEP ATP III).'],
+    ['Non-HDL cholesterol', '2–19: acceptable <120, borderline 120–144, high ≥145 (NHLBI 2011). 20+: desirable <130, then 130–159, 160–189, 190–219, ≥220 (NLA 2015).'],
+    ['HDL cholesterol', '2–19: acceptable >45, borderline 40–45, low <40 (NHLBI 2011). 20+: low <40, and <50 in women; ≥60 protective (NCEP ATP III).'],
+    ['BMI', '20+: underweight <18.5, healthy 18.5–24.9, overweight 25–29.9, obesity ≥30 (WHO). Under 20: not assessed.'],
+    ['eGFR', '18+: KDIGO categories G1 ≥90, G2 60–89, G3a 45–59, G3b 30–44, G4 15–29, G5 <15. G1–G2 alone isn’t kidney disease. Under 18: not assessed.'],
+    ['Smoking, diabetes', 'Any age: current smoking and diagnosed diabetes need attention (AHA Life’s Essential 8).'],
+  ] as [string, string][],
   heartAge: [
     'Heart age uses the Framingham general cardiovascular risk profile (D’Agostino et al., Circulation 2008), the paper that introduced the idea. Your 10-year Framingham risk is calculated from your inputs; heart age is the age at which a person of the same sex with “normal” risk factors — untreated systolic pressure 125 mmHg, total cholesterol 180 mg/dL, HDL 45 mg/dL, no smoking and no diabetes — has the same risk. It is solved exactly, not looked up in a table.',
     'Heart age is reported between 30 and 80 (“under 30” and “over 80” at the edges) and only for ages 30 to 74, the ages the Framingham data covers. It is a way to picture risk and it can motivate change, but research shows it can also alarm people without improving understanding — so we always show it next to your actual risk, never instead of it.',
@@ -78,10 +92,25 @@ x = β₀ + Σ βᵢ·termᵢ + treatment and age interactions      risk = eˣ/(
     'Cholesterol Treatment Trialists’ Collaboration. Efficacy and safety of more intensive lowering of LDL cholesterol. Lancet. 2010;376:1670–1681.',
     'Duncan MS, et al. Association of smoking cessation with subsequent risk of cardiovascular disease. JAMA. 2019;322:642–650.',
     'Lloyd-Jones DM, et al. Life’s Essential 8. Circulation. 2022;146:e18–e43.',
+    'Flynn JT, Kaelber DC, Baker-Smith CM, et al. Clinical practice guideline for screening and management of high blood pressure in children and adolescents. Pediatrics. 2017;140(3):e20171904.',
+    'Expert Panel on Integrated Guidelines for Cardiovascular Health and Risk Reduction in Children and Adolescents. Summary report. Pediatrics. 2011;128(Suppl 5):S213–S256.',
+    'National Cholesterol Education Program (NCEP) Expert Panel. Third report on detection, evaluation, and treatment of high blood cholesterol in adults (ATP III), final report. Circulation. 2002;106:3143–3421.',
+    'Jacobson TA, Ito MK, Maki KC, et al. National Lipid Association recommendations for patient-centered management of dyslipidemia: part 1 — full report. J Clin Lipidol. 2015;9:129–169.',
+    'World Health Organization. Obesity: preventing and managing the global epidemic. WHO Technical Report Series 894. Geneva: WHO; 2000.',
+    'KDIGO 2024 clinical practice guideline for the evaluation and management of chronic kidney disease. Kidney Int. 2024;105(4S):S117–S314.',
     'World Health Organization. Cardiovascular diseases (CVDs) fact sheet, 31 July 2025.',
     'Evans E, Fung YC. Improved measurements of the erythrocyte geometry. Microvasc Res. 1972;4:335–347 (the shape of the 3D red blood cell).',
   ],
   changelog: [
+    {
+      version: '1.1.0',
+      date: '24 September 2026',
+      items: [
+        'Every age from 2 now gets a result. Ages 30 to 79 keep the PREVENT percentage; other ages get a guideline check of each number, with no percentage and no extrapolation.',
+        'Questions whose guideline needs growth charts or pediatric equations are skipped for children, and marked “not assessed” on the result.',
+        'An unknown blood pressure no longer stops the check outside 30–79, where no equation needs it.',
+      ],
+    },
     {
       version: '1.0.0',
       date: '23 September 2026',

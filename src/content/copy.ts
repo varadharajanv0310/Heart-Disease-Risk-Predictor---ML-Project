@@ -8,6 +8,7 @@
 import type { BlockReason, Note } from '@/lib/risk/assess'
 import type { Category } from '@/lib/risk/categories'
 import type { DriverId } from '@/lib/risk/drivers'
+import type { Band, FactorId, FactorSource, NotAssessedReason } from '@/lib/risk/factors'
 import type { NotComputableReason } from '@/lib/risk/types'
 
 export const brand = {
@@ -56,7 +57,7 @@ export const hero = {
     tl: ['Est. 10-yr risk', 'of heart attack & stroke'],
     tr: ['Model', 'AHA PREVENT (2024)'],
     bl: ['Computed on your device', 'Nothing stored on any server'],
-    br: ['Ages 30–79', 'No prior heart disease'],
+    br: ['Any age from 2', 'PREVENT % at 30–79'],
   },
 }
 
@@ -161,8 +162,14 @@ export const questions = {
   age: {
     eyebrow: 'About you',
     label: 'How old are you?',
-    help: 'PREVENT works for ages 30 to 79.',
+    help: 'Any age from 2. From 30 to 79 you’ll get a PREVENT risk percentage; at other ages, a check of each number against the guideline for your age.',
     unit: 'years',
+    outsideTag: 'Guideline check',
+    under30:
+      'PREVENT starts at 30, so instead of a percentage you’ll see each of your numbers against the guideline for your age. We never stretch an equation past the data it was built on.',
+    over79:
+      'PREVENT stops at 79, so instead of a percentage you’ll see each of your numbers against the adult guidelines. We never stretch an equation past the data it was built on.',
+    child: 'Under 18? A parent or guardian can answer, and we’ll skip the questions that need a pediatrician’s growth charts.',
   },
   sex: {
     eyebrow: 'About you',
@@ -224,7 +231,7 @@ export const questions = {
   body: {
     eyebrow: 'Body',
     label: 'How tall are you, and what do you weigh?',
-    help: 'We turn these into BMI, which the heart-failure equation uses.',
+    help: 'We turn these into BMI. PREVENT’s heart-failure equation uses it, and we compare it with the adult BMI ranges.',
     height: 'Height',
     weight: 'Weight',
     bmi: (v: string) => `BMI ${v}`,
@@ -283,15 +290,6 @@ export const blocks: Record<Exclude<BlockReason, 'incomplete'>, { title: string;
     primary: 'Read about who this is for',
     secondary: 'Change my answer',
   },
-  age: {
-    title: 'The equations weren’t built for this age.',
-    body: [
-      'PREVENT was developed on adults aged 30 to 79, so we can’t give you a reliable number — and we won’t guess.',
-      'Under 30? The habits you build now pay off the most. Over 79? A clinician can weigh your risk in person, with your whole history in view.',
-    ],
-    primary: 'Change my age',
-    secondary: 'Read the method',
-  },
   pregnancy: {
     title: 'Let’s wait until after your pregnancy.',
     body: [
@@ -316,6 +314,7 @@ export const blocks: Record<Exclude<BlockReason, 'incomplete'>, { title: string;
 
 export const calculating = {
   lines: ['Running the PREVENT equations', 'Checking every range', 'Bringing it into focus'],
+  linesFactors: ['Reading your numbers', 'Checking each guideline for your age', 'Bringing it into focus'],
   sr: 'Calculating your result',
 }
 
@@ -438,6 +437,15 @@ export const results = {
     weight: 'Weight: losing 5 to 10% of your body weight improves blood pressure, cholesterol and blood sugar.',
     sleep: 'Sleep: 7 to 9 hours a night is now part of the American Heart Association’s heart-health checklist.',
     recheck: 'Recheck your risk when your numbers change, or at least every few years.',
+    // Under-18 and under-30 variants, used by the guideline check.
+    shareYoung: 'Share this report with a pediatrician or family doctor. It includes every number and the guideline behind each one.',
+    bpYoung:
+      'Blood pressure: at 13 to 17, a reading of 130 or more should be confirmed at a clinic. If it stays high, pediatric guidelines look for a cause before anything else.',
+    cholesterolYoung:
+      'Cholesterol: ask about a repeat fasting lipid panel. High cholesterol at a young age can signal familial hypercholesterolemia, which runs in families and is very treatable.',
+    activityYoung: 'Move: children aged 6 to 17 need at least 60 minutes of activity a day. Younger children, active play throughout the day.',
+    sleepYoung: 'Sleep: children need more than adults — about 9 to 12 hours a night at ages 6 to 12, and 8 to 10 for teens.',
+    from30: 'At 30, Focal can give you a 10- and 30-year PREVENT risk. Put a reminder in your calendar, and recheck your numbers every few years until then.',
   },
   notes: {
     south_asian:
@@ -469,6 +477,121 @@ export const results = {
     addNumbers: 'Add my numbers',
     getNumbers:
       'A routine blood test gives you everything: a lipid panel (total and HDL cholesterol) and a basic metabolic panel (eGFR). Ask your clinician, or check your patient portal — you may already have them.',
+  },
+  factors: {
+    label: 'Guideline check',
+    outcome: 'each number, for your age',
+    method: 'Published guideline cut-offs',
+    noPct: 'No risk percentage',
+    preventAges: 'PREVENT covers 30–79',
+    badge: 'No percentage — by design',
+    tally: (healthy: number, assessed: number) =>
+      `${healthy} of your ${assessed} known ${assessed === 1 ? 'number is' : 'numbers are'} in a healthy range for your age.`,
+    title: {
+      under30: 'PREVENT starts at 30. Your numbers don’t have to wait.',
+      over79: 'PREVENT stops at 79. Your numbers still tell a story.',
+    },
+    body: {
+      under30: (age: number) =>
+        `PREVENT was built on adults aged 30 to 79, so at ${age} any percentage would be a guess — and we don’t guess. Instead, here is each of your numbers against the guideline for your age. The habits that set these numbers now shape your heart health for decades.`,
+      over79: (age: number) =>
+        `PREVENT was built on adults aged 30 to 79, so at ${age} any percentage would be a guess — and we don’t guess. Instead, here is each of your numbers against the adult guidelines. After 80, treatment decisions are made individually, weighing your overall health and what matters to you.`,
+    },
+    child: 'For children and teens, a pediatrician is the right person to interpret these numbers.',
+    listTitle: 'Your numbers, one by one',
+    listBody:
+      'Each number is compared with the published guideline for your age. A label, a symbol and the cut-off always go together — color is never the only signal.',
+    labels: {
+      bp: 'Systolic blood pressure',
+      totalCholesterol: 'Total cholesterol',
+      nonHdl: 'Non-HDL cholesterol',
+      hdl: 'HDL cholesterol',
+      bmi: 'BMI',
+      egfr: 'Kidney function (eGFR)',
+      smoking: 'Smoking',
+      diabetes: 'Diabetes',
+    } satisfies Record<FactorId, string>,
+    bands: {
+      healthy: 'Healthy range',
+      watch: 'Worth watching',
+      high: 'Needs attention',
+      unknown: 'Not known',
+      not_assessed: 'Not assessed at this age',
+    } satisfies Record<Band, string>,
+    categories: {
+      bp: {
+        normal: 'Normal',
+        elevated: 'Elevated',
+        stage1: 'Stage 1 high blood pressure',
+        stage2: 'Stage 2 high blood pressure',
+        stage2Severe: 'Stage 2 — 180 or higher',
+      },
+      totalCholesterol: { acceptable: 'Acceptable', desirable: 'Desirable', borderline: 'Borderline high', high: 'High' },
+      nonHdl: {
+        acceptable: 'Acceptable',
+        desirable: 'Desirable',
+        aboveDesirable: 'Above desirable',
+        borderline: 'Borderline high',
+        high: 'High',
+        veryHigh: 'Very high',
+      },
+      hdl: { acceptable: 'Acceptable', borderline: 'Borderline low', low: 'Low', lowForWomen: 'Low for women', normal: 'Normal', high: 'High — protective' },
+      bmi: { underweight: 'Underweight', healthy: 'Healthy weight', overweight: 'Overweight', obesity: 'Obesity' },
+      egfr: {
+        g1: 'Normal (G1)',
+        g2: 'Mildly decreased (G2)',
+        g3a: 'Mildly to moderately decreased (G3a)',
+        g3b: 'Moderately to severely decreased (G3b)',
+        g4: 'Severely decreased (G4)',
+        g5: 'Kidney failure range (G5)',
+      },
+      smoking: { none: 'Doesn’t smoke', smokes: 'Smokes' },
+      diabetes: { none: 'No diabetes diagnosed', diagnosed: 'Diagnosed' },
+    } satisfies Record<FactorId, Record<string, string>>,
+    /** The guideline cut-off, in the person's own units. `c` formats a mg/dL value. */
+    target: {
+      bp: () => 'Guideline: normal below 120 mmHg; stage 1 from 130; stage 2 from 140.',
+      totalCholesterol: (young: boolean, c: (mg: number) => string) =>
+        young ? `Guideline under 20: acceptable below ${c(170)}; high from ${c(200)}.` : `Guideline: desirable below ${c(200)}; high from ${c(240)}.`,
+      nonHdl: (young: boolean, c: (mg: number) => string) =>
+        young ? `Guideline under 20: acceptable below ${c(120)}; high from ${c(145)}.` : `Guideline: desirable below ${c(130)}; high from ${c(190)}.`,
+      hdl: (young: boolean, c: (mg: number) => string, female: boolean) =>
+        young
+          ? `Guideline under 20: acceptable above ${c(45)}; low below ${c(40)}.`
+          : `Guideline: low below ${c(40)}${female ? `, or below ${c(50)} for women` : ''}; protective from ${c(60)}.`,
+      bmi: () => 'Guideline: healthy from 18.5 to 24.9 kg/m².',
+      egfr: () => 'Guideline: normal from 90. 60 to 89 on its own isn’t kidney disease, and is common with age.',
+      smoking: (smokes: boolean) =>
+        smokes ? 'Quitting is the single biggest change for your heart, at any age.' : 'Keep it that way — including vaping and secondhand smoke.',
+      diabetes: (has: boolean) =>
+        has ? 'Keeping blood sugar, blood pressure and cholesterol in range all protect the heart.' : 'A routine blood sugar test (fasting glucose or HbA1c) checks for it.',
+    },
+    unknown: 'Not known yet — a routine check-up and blood test will give you this.',
+    notAssessed: {
+      bp_under_13: 'Under 13, blood pressure is read against percentile charts for age, sex and height. A pediatrician does this at check-ups.',
+      egfr_under_18: 'Children’s kidney function uses different equations. A pediatrician can interpret it.',
+      bmi_under_20: 'Under 20, weight is judged with BMI-for-age growth charts, which a pediatrician or family doctor can check.',
+    } satisfies Record<NotAssessedReason, string>,
+    sources: {
+      aha2025: '2025 AHA/ACC blood pressure guideline',
+      aap2017: 'AAP 2017 pediatric blood pressure guideline',
+      nhlbi2011: 'NHLBI 2011 pediatric guidelines',
+      atp3: 'NCEP ATP III',
+      nla2015: 'National Lipid Association 2015',
+      who: 'WHO adult BMI classification',
+      kdigo2024: 'KDIGO 2024 CKD guideline',
+      le8: 'AHA Life’s Essential 8',
+    } satisfies Record<FactorSource, string>,
+    notGiven: '—',
+    /** Notes reworded for a result with no equation behind it. */
+    notes: {
+      south_asian:
+        'You told us you have South Asian ancestry. US guidelines treat it as a risk-enhancing factor, so mention it when you discuss these numbers.',
+      family_history:
+        'A parent or sibling with early heart disease matters at any age. Guidelines recommend a cholesterol check for children and young adults with this family history, to look for inherited high cholesterol. Worth raising with your clinician.',
+      history_unsure:
+        'You weren’t sure about past heart disease. If you’ve ever had a heart attack, stroke or heart failure, talk with your clinician — this check isn’t built for that.',
+    } satisfies Partial<Record<Note, string>>,
   },
   notComputable: {
     title: 'We can’t compute this result.',
@@ -520,6 +643,10 @@ export const report = {
   notes: 'Notes',
   method:
     'Method: AHA PREVENT base equations (Khan SS et al., Circulation 2024;149:430–449), sex-specific, ages 30–79. Categories: 2026 ACC/AHA dyslipidemia guideline (10-yr ASCVD: low <3%, borderline 3–<5%, intermediate 5–<10%, high ≥10%). Heart age: Framingham general CVD (D’Agostino RB et al., Circulation 2008;117:743–753).',
+  methodFactors:
+    'Age outside 30–79: no risk equation applied and no percentage shown. Each value is classified against: 2025 AHA/ACC BP guideline (≥18 y); AAP 2017 (13–17 y); NHLBI 2011 pediatric lipids (2–19 y); NCEP ATP III and NLA 2015 lipids (≥20 y); WHO BMI (≥20 y); KDIGO 2024 GFR categories (≥18 y). Younger ages need percentile charts and are marked “not assessed”.',
+  notAsked: 'Not asked at this age',
+  factorsTitle: 'Guideline check',
   forClinician: 'For your clinician',
   empty: 'There’s nothing to print yet. Finish the heart check first, or open this page from the QR code on your result.',
   print: 'Print',
@@ -534,6 +661,7 @@ export const method = {
   sections: {
     model: 'The model',
     validity: 'Who it’s for — and who it isn’t',
+    ages: 'Every age',
     heartAge: 'Heart age',
     unknown: 'When you don’t know your numbers',
     insights: 'Drivers and what-ifs',
@@ -555,7 +683,7 @@ export const notFound = {
 
 export const footer = {
   paragraph:
-    'Focal is an educational tool that estimates cardiovascular risk using the American Heart Association’s PREVENT equations (Khan et al., Circulation, 2024). It is not a diagnosis, not medical advice, and not a substitute for a clinician who knows your history. Results apply to adults aged 30 to 79 without known heart disease. Every calculation runs on your device; your answers are never sent to a server, and there are no accounts or analytics on health inputs. Answers are saved only in this browser until you clear them. Focal is independent and is not affiliated with or endorsed by the American Heart Association. If you have chest pain, trouble breathing or have fainted, call 911 or your local emergency number now.',
+    'Focal is an educational tool that estimates cardiovascular risk using the American Heart Association’s PREVENT equations (Khan et al., Circulation, 2024). It is not a diagnosis, not medical advice, and not a substitute for a clinician who knows your history. The PREVENT percentage applies to adults aged 30 to 79 without known heart disease; at other ages, Focal compares each number with the guideline for that age instead of guessing. Every calculation runs on your device; your answers are never sent to a server, and there are no accounts or analytics on health inputs. Answers are saved only in this browser until you clear them. Focal is independent and is not affiliated with or endorsed by the American Heart Association. If you have chest pain, trouble breathing or have fainted, call 911 or your local emergency number now.',
   links: [
     { href: '/method/', label: 'Method' },
     { href: '/method/#privacy', label: 'Privacy' },
@@ -568,4 +696,4 @@ export const footer = {
 }
 
 export const disclaimerLine =
-  'Educational estimate only — not a diagnosis. Valid for adults aged 30–79 without known cardiovascular disease. Computed entirely on the patient’s device.'
+  'Educational estimate only — not a diagnosis. PREVENT results are valid for adults aged 30–79 without known cardiovascular disease; other ages receive a guideline check with no risk percentage. Computed entirely on the patient’s device.'

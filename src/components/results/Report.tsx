@@ -9,14 +9,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { brand, disclaimerLine, questions as q, report as copy, reasons, results as rc } from '@/content/copy'
 import { type Prefs, useHydrated, useStored } from '@/lib/answers-store'
 import { decodeReport, encodeReport } from '@/lib/report-link'
-import { type Answers, assess } from '@/lib/risk/assess'
+import { type Answers, asks, assess } from '@/lib/risk/assess'
+import { tally } from '@/lib/risk/factors'
 import type { Computed } from '@/lib/risk/types'
 import { length, mass, round } from '@/lib/risk/units'
 import { setScene } from '@/lib/scene-store'
 import { IS_ARTIFACT } from '@/lib/target'
 import { Button } from '../ui/Button'
 import { QrCode } from '../ui/QrCode'
-import { pct } from './parts'
+import { BandBadge, factorTarget, factorValue, noteText, pct } from './parts'
 
 function useReportSource(): { answers: Answers; prefs: Partial<Prefs>; fromLink: boolean } | null {
   const hydrated = useHydrated()
@@ -85,20 +86,22 @@ export function Report() {
         ? `${length.toFeetInches(answers.heightCm).feet} ft ${length.toFeetInches(answers.heightCm).inches} in, ${Math.round(mass.toLb(answers.weightKg))} lb`
         : `${Math.round(answers.heightCm)} cm, ${round(answers.weightKg, 1)} kg`
       : 'Not given'
+  const asked = (k: Parameters<typeof asks>[0], shown: string) => (asks(k, answers) ? shown : copy.notAsked)
   const inputs: [string, string][] = [
     ['Age', `${i.age} years`],
     ['Sex assigned at birth', i.sex === 'female' ? q.sex.female : q.sex.male],
-    ['Systolic blood pressure', i.sbp == null ? 'Not known' : `${i.sbp} mmHg`],
-    ['Blood pressure medicine', i.bpTreated ? 'Yes' : 'No'],
+    ['Systolic blood pressure', asked('sbp', i.sbp == null ? 'Not known' : `${i.sbp} mmHg`)],
+    ['Blood pressure medicine', asked('sbp', i.bpTreated ? 'Yes' : 'No')],
     ['Total cholesterol', chol(i.totalCholesterol)],
     ['HDL cholesterol', chol(i.hdl)],
     ['Statin', i.statin ? 'Yes' : 'No'],
     ['Diabetes', i.diabetes ? 'Yes' : 'No'],
     ['Current smoker', i.smoker ? 'Yes' : 'No'],
-    ['Height, weight', body],
-    ['BMI', i.bmi == null ? '—' : `${round(i.bmi, 1).toFixed(1)} kg/m²`],
-    ['eGFR', i.egfr == null ? 'Not known' : `${i.egfr} mL/min/1.73m²`],
+    ['Height, weight', asked('body', body)],
+    ['BMI', asked('body', i.bmi == null ? '—' : `${round(i.bmi, 1).toFixed(1)} kg/m²`)],
+    ['eGFR', asked('egfr', i.egfr == null ? 'Not known' : `${i.egfr} mL/min/1.73m²`)],
   ]
+  const t = a.kind === 'factors' ? tally(a.factors) : null
 
   return (
     <div className="relative z-10 min-h-[100svh] bg-paper px-3 pb-16 pt-24 print:p-0 md:px-6 md:pt-28">
@@ -144,6 +147,16 @@ export function Report() {
               </dd>
             </dl>
           </section>
+        ) : a.kind === 'factors' ? (
+          <section className="mt-6 border-b border-blood/15 pb-6">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.08em]">{rc.factors.badge}</p>
+            <p className="mt-1 text-[48px] font-medium leading-none tracking-[-0.05em] text-ink-red tabular">
+              {t!.healthy}
+              <span className="text-[24px] text-blood/70">/{t!.assessed}</span>
+            </p>
+            <p className="mt-2 text-[14px] font-medium">{rc.factors.tally(t!.healthy, t!.assessed)}</p>
+            <p className="mt-1 text-[13px]">{rc.factors.body[a.ageBand](i.age)}</p>
+          </section>
         ) : (
           <section className="mt-6 border-b border-blood/15 pb-6">
             <p className="text-[12px] font-semibold uppercase tracking-[0.08em]">{rc.estimate.badge}</p>
@@ -168,6 +181,28 @@ export function Report() {
               </tbody>
             </table>
           </section>
+          {a.kind === 'factors' && (
+            <section>
+              <h2 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-blood/75">{copy.factorsTitle}</h2>
+              <ul className="mt-3 text-[13px]">
+                {a.factors.map((f) => (
+                  <li key={f.id} className="border-b border-blood/10 py-2">
+                    <p className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium">
+                        {rc.factors.labels[f.id]} <span className="font-normal text-blood/75">{factorValue(f, src.prefs.chol ?? 'mgdl')}</span>
+                      </span>
+                      <BandBadge band={f.band} />
+                    </p>
+                    <p className="mt-1 text-[12px] text-blood/80">
+                      {f.category && <strong className="font-semibold text-blood">{(rc.factors.categories[f.id] as Record<string, string>)[f.category]} · </strong>}
+                      {factorTarget(f, i, src.prefs.chol ?? 'mgdl')}
+                      {f.source && ` (${rc.factors.sources[f.source]})`}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {a.kind === 'prevent' && (
             <section>
               <h2 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-blood/75">{copy.results}</h2>
@@ -221,7 +256,7 @@ export function Report() {
             <h2 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-blood/75">{copy.notes}</h2>
             <ul className="mt-2 list-disc pl-5 text-[13px] leading-relaxed">
               {a.notes.map((n) => (
-                <li key={n}>{rc.notes[n]}</li>
+                <li key={n}>{noteText(a, n)}</li>
               ))}
             </ul>
           </section>
@@ -229,7 +264,7 @@ export function Report() {
 
         <footer className="mt-8 border-t border-blood/15 pt-4 text-[11px] leading-relaxed text-blood/80">
           <p className="font-semibold">{copy.forClinician}</p>
-          <p className="mt-1">{copy.method}</p>
+          <p className="mt-1">{a.kind === 'factors' ? copy.methodFactors : copy.method}</p>
           <p className="mt-2">{disclaimerLine}</p>
         </footer>
       </article>
